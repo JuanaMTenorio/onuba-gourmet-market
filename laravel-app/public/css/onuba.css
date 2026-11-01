@@ -1,0 +1,530 @@
+/* ***************************** */
+/* ACCESIBILIDAD GENERAL */
+/* ***************************** */
+
+/* Enlace "Saltar al contenido": solo aparece al navegar con teclado */
+.saltar-contenido {
+    position: absolute;
+    left: 8px;
+    top: -60px;
+    z-index: 2000;
+    background-color: #ffffff;
+    color: #2f472c;
+    padding: 10px 16px;
+    border: 2px solid #2f472c;
+    border-radius: 4px;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.saltar-contenido:focus {
+    top: 8px;
+}
+
+/* Foco visible para quien navega con teclado */
+a:focus-visible,
+button:focus-visible {
+    outline: 3px solid #2f472c;
+    outline-offset: 3px;
+    border-radius: 4px;
+}
+
+/* Sobre fondos oscuros el foco debe ser claro */
+.barra-superior a:focus-visible,
+.hero a:focus-visible {
+    outline-color: #ffffff;
+}
+
+/* Respeta a quien tiene desactivadas las animaciones en su sistema */
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+        transition: none !important;
+        animation: none !important;
+    }
+}
+
+/* ***************************** */
+/* BARRA SUPERIOR */
+/* ***************************** */
+.barra-superior {
+    background-color: #2f472c;
+    color: white;
+    padding: 6px 0;
+    font-size: 14px;
+}
+
+/* Igual que antes: los mensajes se reparten por todo el ancho de la barra */
+.barra-contenido {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 4px 16px;
+}
+
+@media (min-width: 992px) {
+    .barra-superior {
+        font-size: 15px;
+    }
+}
+
+/* ***************************** */
+/* CABECERA */
+/* ***************************** */
+.cabecera-principal {
+    background-color: #ffffff;
+    padding: 12px 0;
+}
+
+/* Móvil / tablet: fila 1 = logo + iconos, fila 2 = menú desplegable */
+.cabecera-contenido {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+        "logo acciones"
+        "menu menu";
+    align-items: center;
+    gap: 8px;
+}
+
+.logo-enlace {
+    grid-area: logo;
+    justify-self: start;
+}
+
+.logo-onuba {
+    width: 180px;
+    max-width: 100%;
+    height: auto;
+}
+
+/* Menú principal */
+.menu-principal {
+    grid-area: menu;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.menu-principal a {
+    color: #333333;
+    text-decoration: none;
+    font-size: 18px;
+    padding: 12px 4px;
+    border-bottom: 1px solid #e6e1d6;
+}
+
+.menu-principal a:hover {
+    color: #2f472c;
+    text-decoration: underline;
+    text-underline-offset: 6px;
+}
+
+/* Zona de iconos */
+.iconos-cabecera {
+    grid-area: acciones;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 4px;
+}
+
+/* Zona táctil mínima de 44x44 px */
+.iconos-cabecera a,
+.btn-menu {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    color: #2f472c;
+    text-decoration: none;
+    font-size: 22px;
+    background: transparent;
+    border: 0;
+    border-radius: 50%;
+}
+
+.iconos-cabecera a:hover,
+.btn-menu:hover {
+    background-color: #f7f4ed;
+    color: #2f472c;
+}
+
+.iconos-cabecera i {
+    color: #2f472c;
+}
+
+/* Desde 992 px el menú se ve siempre (sin hamburguesa), en una fila propia debajo del logo */
+@media (min-width: 992px) {
+
+    /* Anula el "display: none" de Bootstrap .collapse para mostrar el menú siempre */
+    .menu-principal.collapse:not(.show) {
+        display: flex;
+    }
+
+    .menu-principal {
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: center;
+        gap: 4px 28px;
+    }
+
+    .menu-principal a {
+        padding: 8px 0;
+        border-bottom: 0;
+    }
+
+    .logo-onuba {
+        width: 220px;
+    }
+}
+
+/* Pantallas anchas (1200 px o más): logo | menú | iconos en una sola fila */
+@media (min-width: 1200px) {
+    .cabecera-contenido {
+        grid-template-columns: auto 1fr auto;
+        grid-template-areas: "logo menu acciones";
+        gap: 24px;
+    }
+
+    .logo-onuba {
+        width: 260px;
+    }
+}
+
+/* ***************************** */
+/* HERO */
+/* ***************************** */
+.hero {
+    width: 100%;
+    min-height: 380px;
+    padding: 56px 0;
+    display: flex;
+    align-items: center;
+    /* En móvil el texto ocupa todo el ancho: oscurecemos la imagen de forma uniforme
+       para que el texto blanco siempre tenga buen contraste */
+    background-image:
+        linear-gradient(rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.55)),
+        url('../imagen/portada/hero.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.hero-contenido {
+    max-width: 900px;
+}
+
+.hero-contenido h1 {
+    font-size: clamp(1.75rem, 1.2rem + 2.6vw, 2.9rem);
+    color: white;
+    font-weight: 600;
+    line-height: 1.15;
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+
+.hero-contenido p {
+    font-size: clamp(1rem, 0.9rem + 0.8vw, 1.4rem);
+    color: white;
+    margin-top: 20px;
+    margin-bottom: 30px;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+
+.btn-hero {
+    display: inline-block;
+    background-color: #2f472c;
+    font-size: 18px;
+    color: white;
+    text-decoration: none;
+    padding: 12px 26px;
+    border: 2px solid #ffffff;
+}
+
+.btn-hero:hover {
+    background-color: #ffffff;
+    color: #2f472c;
+}
+
+/* Escritorio: proporción 3:1 y degradado lateral original */
+@media (min-width: 992px) {
+    .hero {
+        aspect-ratio: 3 / 1;
+        padding: 0;
+        background-image:
+            linear-gradient(90deg,
+                rgba(0, 0, 0, 0.55) 0%,
+                rgba(0, 0, 0, 0.30) 40%,
+                rgba(0, 0, 0, 0) 70%),
+            url('../imagen/portada/hero.png');
+    }
+}
+
+/* ***************************** */
+/* SECCIÓN VENTAJAS */
+/* ***************************** */
+.ventajas {
+    background-color: #f7f4ed;
+    padding: 25px 0;
+}
+
+.ventajas-contenido {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+}
+
+.ventaja {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 15px;
+    padding: 0 8px;
+}
+
+.ventaja i {
+    color: #2f472c;
+    font-size: 28px;
+}
+
+.ventaja strong {
+    display: block;
+    color: #2f472c;
+    font-size: 15px;
+}
+
+.ventaja span {
+    display: block;
+    color: #595959;
+    font-size: 14px;
+    margin-top: 2px;
+}
+
+@media (min-width: 576px) {
+    .ventajas-contenido {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (min-width: 992px) {
+    .ventajas-contenido {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0;
+    }
+
+    .ventaja {
+        justify-content: center;
+        padding: 0 20px;
+    }
+}
+
+/* ***************************** */
+/* SECCIÓN CATEGORÍAS */
+/* ***************************** */
+.categorias {
+    padding: 40px 0;
+}
+
+.titulo-seccion {
+    text-align: center;
+    margin-bottom: 32px;
+}
+
+.titulo-seccion h2 {
+    color: #2f472c;
+    font-size: clamp(1.6rem, 1.2rem + 1.6vw, 2.25rem);
+    margin-bottom: 10px;
+}
+
+.titulo-seccion p {
+    color: #595959;
+    font-size: 16px;
+}
+
+.categorias .container {
+    max-width: 2000px;
+}
+
+.categorias-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+}
+
+.categoria-card img {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 4 / 5;
+    object-fit: cover;
+    border-radius: 8px;
+    transition: transform 0.3s ease;
+}
+
+.categoria-card img:hover {
+    transform: scale(1.03);
+}
+
+.categoria-card h3 {
+    text-align: center;
+    color: #2f472c;
+    font-size: 18px;
+    margin-top: 15px;
+}
+
+.categoria-enlace {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+}
+
+.categoria-enlace:hover h3 {
+    text-decoration: underline;
+    text-underline-offset: 4px;
+}
+
+@media (min-width: 768px) {
+    .categorias {
+        padding: 56px 0;
+    }
+
+    .categorias-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+    }
+}
+
+@media (min-width: 992px) {
+    .categorias-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+@media (min-width: 1400px) {
+    .categorias-grid {
+        grid-template-columns: repeat(6, 1fr);
+    }
+}
+
+
+
+/* ******************************** */
+/* PÁGINA DE CATEGORÍAS - CATÁLOGO */
+/* ******************************** */
+
+.pagina-categoria {
+    display: grid;
+    grid-template-columns: 300px minmax(0, 1fr);
+    gap: 20px;
+    width: 100%;
+}
+
+.categorias-lateral {
+    padding: 35px 20px;
+}
+
+.contenido-categoria {
+    min-width: 0;
+}
+
+@media (max-width: 991px) {
+
+    .pagina-categoria {
+        grid-template-columns: 1fr;
+    }
+
+    .categorias-lateral {
+        padding: 20px;
+    }
+}
+
+/* MENÚ LATERAL DE CATEGORÍAS */
+
+.categorias-lateral h2 {
+    font-size: 16px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 25px;
+    color: #222222;
+}
+
+.lista-categorias {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.enlace-categoria {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px;
+    color: #333333;
+    text-decoration: none;
+    border-radius: 8px;
+    font-size: 16px;
+}
+
+.enlace-categoria:hover {
+    background-color: #f7f4ed;
+    color: #2f472c;
+}
+
+.categoria-activa {
+    background-color: #e9ede3;
+    color: #2f472c;
+    font-weight: 600;
+}
+
+/* ***************************** */
+/* BANNER DE CATEGORÍA */
+/* ***************************** */
+
+.banner-categoria {
+    min-height: 250px;
+    display: flex;
+    align-items: center;
+    padding: 40px;
+    background-color: #2f472c;
+    color: white;
+    border-radius: 4px;
+}
+
+.banner-categoria-contenido {
+    max-width: 650px;
+}
+
+.banner-categoria h1 {
+    font-size: 56px;
+    font-weight: 600;
+    margin-bottom: 15px;
+}
+
+.banner-categoria p {
+    font-size: 18px;
+    line-height: 1.6;
+    margin-bottom: 0;
+}
+
+@media (max-width: 767px) {
+
+    .banner-categoria {
+        min-height: 200px;
+        padding: 25px;
+    }
+
+    .banner-categoria h1 {
+        font-size: 36px;
+    }
+
+    .banner-categoria p {
+        font-size: 16px;
+    }
+}
