@@ -5,6 +5,8 @@
 {{-- Título de la pestaña del navegador --}}
 @section('titulo', $categoria->nombre . ' | ONUBA GOURMET MARKET')
 
+@section('clase-body', 'vista-categoria')
+
 @section('contenido')
 
 <div class="pagina-categoria">
@@ -14,31 +16,7 @@
 
         <h2>Categorías</h2>
 
-        <nav aria-label="Seleccionar categoría">
-            <ul class="lista-categorias">
-
-                @foreach ($categorias as $item)
-
-                <li>
-                    <a
-                        href="{{ url('/categoria/' . $item->slug) }}"
-                        class="enlace-categoria {{ $item->id == $categoria->id ? 'categoria-activa' : '' }}"
-                        @if ($item->id == $categoria->id)
-                        aria-current="page"
-                        @endif
-                        >
-                        <span>{{ $item->nombre }}</span>
-
-                        @if ($item->id == $categoria->id)
-                        <i class="bi bi-chevron-right" aria-hidden="true"></i>
-                        @endif
-                    </a>
-                </li>
-
-                @endforeach
-
-            </ul>
-        </nav>
+        @include('partials.menu-categorias')
 
     </aside>
 
@@ -47,10 +25,17 @@
     <div class="contenido-categoria">
 
         {{-- BANNER DE LA CATEGORÍA --}}
-        <section class="banner-categoria"
+        <section class="banner-categoria {{ $bannerCategoria ? 'banner-categoria-con-imagen' : '' }}"
             aria-labelledby="titulo-categoria">
 
-            <div class="banner-categoria-contenido">
+            @if ($bannerCategoria)
+            {{-- El texto equivalente permanece disponible para lectores de pantalla. --}}
+            <img class="banner-categoria-imagen"
+                src="{{ asset($bannerCategoria) }}"
+                alt="" loading="eager" fetchpriority="high">
+            @endif
+
+            <div class="banner-categoria-contenido {{ $bannerCategoria ? 'visually-hidden' : '' }}">
 
                 <h1 id="titulo-categoria">
                     {{ $categoria->nombre }}
@@ -64,6 +49,16 @@
 
         </section>
 
+
+        {{-- Móvil y tablet: selector cerrado inicialmente, después del banner. --}}
+        <details class="categorias-desplegable">
+            <summary>
+                <i class="bi bi-list" aria-hidden="true"></i>
+                <span>Categorías</span>
+                <i class="bi bi-chevron-down indicador-categorias" aria-hidden="true"></i>
+            </summary>
+            @include('partials.menu-categorias')
+        </details>
 
         {{-- BARRA DE RESULTADOS Y ORDENACIÓN --}}
         <div class="barra-productos">
@@ -85,6 +80,7 @@
                 <select
                     id="orden-productos"
                     name="orden"
+                    aria-describedby="ayuda-orden"
                     class="form-select">
                     <option value="nombre"
                         @selected(request('orden', 'nombre' )==='nombre' )>
@@ -103,6 +99,10 @@
 
                 </select>
 
+                <span id="ayuda-orden" class="visually-hidden">
+                    Al cambiar la opción se recarga la página con los productos ordenados.
+                </span>
+
                 <button type="submit" class="btn-ordenar">
                     Ordenar
                 </button>
@@ -120,58 +120,7 @@
 
                 @forelse ($productos as $producto)
 
-                <article class="tarjeta-producto">
-
-                    {{-- IMAGEN DEL PRODUCTO --}}
-                    <div class="imagen-producto">
-
-                        <img
-                            src="{{ asset('imagen/productos/' . $producto->imagen) }}" 
-                            alt="{{ $producto->nombre }}"
-                            loading="lazy">
-
-                    </div>
-
-
-                    {{-- INFORMACIÓN DEL PRODUCTO --}}
-                    <div class="informacion-producto">
-
-                        <h2 class="nombre-producto">
-                            {{ $producto->nombre }}
-                        </h2>
-
-                        @if ($producto->formato)
-                        <p class="formato-producto">
-                            {{ $producto->formato }}
-                        </p>
-                        @endif
-
-                        <p class="precio-producto">
-                            {{ number_format($producto->precio, 2, ',', '.') }} €
-                        </p>
-
-                        @if ($producto->stock > 0)
-
-                        <button
-                            type="button"
-                            class="btn-carrito"
-                            disabled
-                            title="Funcionalidad del carrito pendiente de implementar">
-                            <i class="bi bi-cart3" aria-hidden="true"></i>
-                            Añadir al carrito
-                        </button>
-
-                        @else
-
-                        <span class="producto-agotado">
-                            Producto agotado
-                        </span>
-
-                        @endif
-
-                    </div>
-
-                </article>
+                @include('partials.tarjeta-producto')
 
                 @empty
 
@@ -204,3 +153,16 @@
 </div>
 
 @endsection
+
+@push('scripts')
+<script>
+    // Ordenar al seleccionar en todos los dispositivos. Sin JavaScript se conserva el botón.
+    const selectorOrden = document.getElementById('orden-productos');
+    if (selectorOrden) {
+        selectorOrden.form.classList.add('ordenacion-automatica');
+        selectorOrden.addEventListener('change', () => {
+            selectorOrden.form.requestSubmit();
+        });
+    }
+</script>
+@endpush

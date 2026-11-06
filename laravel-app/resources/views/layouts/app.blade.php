@@ -20,11 +20,11 @@
     <title>@yield('titulo', 'ONUBA GOURMET MARKET')</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <link rel="stylesheet" href="{{ asset('css/onuba.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/estilos.css') }}">
     @stack('estilos')
 </head>
 
-<body>
+<body class="@yield('clase-body')">
 
     <!-- Permite a quien navega con teclado o lector de pantalla saltar la cabecera -->
     <a href="#contenido" class="saltar-contenido">Saltar al contenido</a>
@@ -40,12 +40,12 @@
                     <i class="bi bi-award" aria-hidden="true"></i>
                     Calidad y tradición
                 </span>
-                <!-- En móvil se ocultan estos dos mensajes para que la barra no ocupe demasiado -->
-                <span class="d-none d-sm-inline">
+                <!-- En categorías también se muestran los cuatro mensajes en móvil. -->
+                <span class="mensaje-superior-adicional d-none d-sm-inline">
                     <i class="bi bi-truck" aria-hidden="true"></i>
                     Envíos a toda España
                 </span>
-                <span class="d-none d-sm-inline">
+                <span class="mensaje-superior-adicional d-none d-sm-inline">
                     <i class="bi bi-headset" aria-hidden="true"></i>
                     Atención al cliente
                 </span>
@@ -60,19 +60,19 @@
                 <!-- LOGO -->
                 <a href="/" class="logo-enlace">
                     <img
-                        src="{{ asset('imagen/logo/LOGO ONUBA GOURMET MARKET.png') }}"
+                        src="{{ asset('imagen/logo/LOGO ONUBA GOURMET MARKET.webp') }}"
                         alt="ONUBA Gourmet Market, ir a la página de inicio"
                         class="logo-onuba">
                 </a>
 
                 <!-- MENÚ: en pantallas menores de 992 px se despliega con el botón de hamburguesa -->
                 <nav id="menu-principal" class="menu-principal collapse" aria-label="Categorías de productos">
-                    <a href="#">Jamones y embutidos</a>
-                    <a href="#">Aceites de oliva</a>
-                    <a href="#">Conservas y salazones</a>
-                    <a href="#">Quesos</a>
-                    <a href="#">Miel y dulces</a>
-                    <a href="#">Vinos</a>
+                    <a href="{{ url('/categoria/jamones-y-embutidos') }}">Jamones y embutidos</a>
+                    <a href="{{ url('/categoria/aceites-de-oliva') }}">Aceites de oliva</a>
+                    <a href="{{ url('/categoria/conservas-y-salazones') }}">Conservas y salazones</a>
+                    <a href="{{ url('/categoria/quesos') }}">Quesos</a>
+                    <a href="{{ url('/categoria/miel-y-dulces') }}">Miel y dulces</a>
+                    <a href="{{ url('/categoria/vinos') }}">Vinos</a>
                 </nav>
 
                 <!-- ICONOS -->
@@ -102,7 +102,7 @@
         </div>
     </header>
 
-    <main id="contenido">
+    <main id="contenido" tabindex="-1">
         {{-- Aquí se inserta el contenido de cada página --}}
         @yield('contenido')
     </main>
