@@ -20,7 +20,9 @@
     <title>@yield('titulo', 'ONUBA GOURMET MARKET')</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <link rel="stylesheet" href="{{ asset('css/estilos.css') }}">
+    {{-- La versión cambia al modificar los estilos para evitar una copia antigua en caché --}}
+    {{-- Zonas comunes de todas las páginas --}}
+    <link rel="stylesheet" href="{{ asset('css/zonasComunes.css') }}?v={{ filemtime(public_path('css/zonasComunes.css')) }}">
     @stack('estilos')
 </head>
 
@@ -34,16 +36,11 @@
             <div class="barra-contenido">
                 <span>
                     <i class="bi bi-geo-alt" aria-hidden="true"></i>
-                    Productos gourmet de Huelva
+                    Huelva es Gourmet
                 </span>
                 <span>
                     <i class="bi bi-award" aria-hidden="true"></i>
                     Calidad y tradición
-                </span>
-                <!-- En categorías también se muestran los cuatro mensajes en móvil. -->
-                <span class="mensaje-superior-adicional d-none d-sm-inline">
-                    <i class="bi bi-truck" aria-hidden="true"></i>
-                    Envíos a toda España
                 </span>
                 <span class="mensaje-superior-adicional d-none d-sm-inline">
                     <i class="bi bi-headset" aria-hidden="true"></i>
@@ -83,8 +80,9 @@
                     <a href="#" aria-label="Mi cuenta">
                         <i class="bi bi-person" aria-hidden="true"></i>
                     </a>
-                    <a href="#" aria-label="Carrito">
+                    <a href="{{ route('carrito.index') }}" aria-label="Carrito">
                         <i class="bi bi-bag" aria-hidden="true"></i>
+                        <span class="contador-carrito">{{ array_sum(session('carrito', [])) }}</span>
                     </a>
                     <button
                         type="button"
@@ -103,9 +101,26 @@
     </header>
 
     <main id="contenido" tabindex="-1">
+        {{-- Muestra la confirmación o el motivo por el que no se pudo cambiar el carrito --}}
+        @if (session('mensaje'))
+            <div class="container mt-3"><p class="alert alert-success" role="status">{{ session('mensaje') }}</p></div>
+        @endif
+        @if (session('aviso'))
+            <div class="container mt-3"><p class="alert alert-warning" role="status">{{ session('aviso') }}</p></div>
+        @endif
+        @if ($errors->any())
+            <div class="container mt-3"><ul class="alert alert-danger" role="alert">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul></div>
+        @endif
         {{-- Aquí se inserta el contenido de cada página --}}
         @yield('contenido')
     </main>
+
+    {{-- Pie común para las páginas de inicio, categorías y carrito --}}
+    @include('partials.footer')
 
     {{-- Necesario para que funcione el botón del menú en móvil --}}
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>

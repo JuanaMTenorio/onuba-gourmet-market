@@ -7,8 +7,15 @@ una petición a InicioController para que ejecute su método 'index'. */
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\InicioController;
+use App\Http\Controllers\CarritoController;
 
 Route::get('/', [InicioController::class, 'index']);
 
 // Ruta para mostrar los productos de una categoría
 Route::get('/categoria/{slug}', [InicioController::class, 'categoria']);
+
+// Las consultas usan GET y los cambios del carrito se envían mediante formularios
+Route::get('/carrito', [CarritoController::class, 'index'])->name('carrito.index');
+Route::post('/carrito/{producto}', [CarritoController::class, 'agregar'])->name('carrito.agregar');
+Route::patch('/carrito/{producto}', [CarritoController::class, 'actualizar'])->name('carrito.actualizar');
+Route::delete('/carrito/{identificador}', [CarritoController::class, 'eliminar'])->name('carrito.eliminar');

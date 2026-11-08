@@ -1,0 +1,567 @@
+/* *************************************************************
+   CATEGORÍAS distribución + menú lateral
+   ************************************************************* */
+/* Distribuye el menú a la izquierda y el catálogo a la derecha */
+.pagina-categoria {
+    display: grid;
+    grid-template-columns: 300px minmax(0, 1fr);
+    gap: 24px;
+    width: 100%;
+    background-color: #ffffff;
+}
+
+.contenido-categoria {
+    min-width: 0;
+    padding: 0 16px 32px;
+}
+
+/* Título y espacio interior del menú lateral */
+.categorias-lateral {
+    padding: 32px 20px;
+}
+
+.categorias-lateral h2 {
+    margin: 0 0 24px;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 24px;
+    color: #2f472c;
+}
+
+/* Elimina las marcas y los espacios propios de una lista */
+.lista-categorias {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+/* Coloca el nombre de la categoría y su flecha en la misma fila */
+.enlace-categoria {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: 44px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    color: #333333;
+    text-decoration: none;
+}
+
+.enlace-categoria:hover {
+    background-color: #f7f4ed;
+    color: #2f472c;
+}
+
+/* Destaca la categoría que se está visitando */
+.categoria-activa {
+    background-color: #f7f4ed;
+    color: #2f472c;
+    font-weight: bold;
+}
+
+/* En ordenador no se muestra el menú desplegable */
+.categorias-desplegable {
+    display: none;
+}
+
+/* Aspecto del control que abre las categorías en móvil y tablet */
+.categorias-desplegable summary {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 48px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    background-color: #f7f4ed;
+    color: #2f472c;
+    font-weight: bold;
+    cursor: pointer;
+    list-style: none;
+}
+
+.categorias-desplegable summary::-webkit-details-marker {
+    display: none;
+}
+
+.indicador-categorias {
+    margin-left: auto;
+}
+
+/* Gira la flecha cuando el menú está abierto */
+.categorias-desplegable[open] .indicador-categorias {
+    transform: rotate(180deg);
+}
+
+.categorias-desplegable summary:focus-visible {
+    outline: 3px solid #2f472c;
+    outline-offset: 3px;
+}
+
+/* *************************************************************
+   BANNER imagen + título de categoría
+   ************************************************************* */
+
+/* Aspecto del banner cuando la categoría no tiene una imagen propia */
+.banner-categoria {
+    display: flex;
+    align-items: center;
+    min-height: 250px;
+    padding: 40px;
+    overflow: hidden;
+    border-radius: 8px;
+    background-color: #2f472c;
+    color: #ffffff;
+}
+
+.banner-categoria-contenido {
+    max-width: 650px;
+}
+
+.banner-categoria h1 {
+    margin: 0 0 16px;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 46px;
+}
+
+.banner-categoria p {
+    margin: 0;
+    font-size: 18px;
+}
+
+/* Cuando hay imagen, su proporción determina la altura del banner */
+.banner-categoria.banner-categoria-con-imagen {
+    display: block;
+    min-height: 0;
+    padding: 0;
+    background-color: transparent;
+}
+
+.banner-categoria-imagen {
+    display: block;
+    width: 100%;
+}
+
+/* *************************************************************
+   RESULTADOS contador + ordenación
+   ************************************************************* */
+
+/* Coloca el contador a la izquierda y la ordenación a la derecha */
+.barra-productos {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 24px 0;
+}
+
+.contador-productos {
+    margin: 0;
+    color: #595959;
+}
+
+/* Agrupa la etiqueta, el selector y el botón de ordenar */
+.formulario-ordenacion {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+}
+
+.formulario-ordenacion .form-select {
+    width: 224px;
+    max-width: 100%;
+    min-height: 44px;
+    border: 1px solid #deded6;
+    border-radius: 8px;
+    background-color: #ffffff;
+    color: #333333;
+    font-family: inherit;
+    font-size: 16px;
+}
+
+/* Botón disponible cuando JavaScript está desactivado */
+.btn-ordenar {
+    min-height: 44px;
+    padding: 10px 16px;
+    border: 1px solid #2f472c;
+    border-radius: 8px;
+    background-color: #2f472c;
+    color: #ffffff;
+    font-family: inherit;
+    font-size: 16px;
+}
+
+.btn-ordenar:hover {
+    background-color: #203b1d;
+}
+
+/* Mantiene el foco visible sobre los estilos de Bootstrap */
+.formulario-ordenacion .form-select:focus-visible {
+    outline: 3px solid #2f472c;
+    outline-offset: 3px;
+}
+
+/* JavaScript añade esta clase al activar la ordenación automática */
+.ordenacion-automatica .btn-ordenar {
+    display: none;
+}
+
+/* *************************************************************
+   PRODUCTOS tarjetas + precio + carrito
+   ************************************************************* */
+
+/* Distribuye los productos en cuatro columnas en ordenador */
+.productos-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 20px;
+}
+
+/* Tarjeta blanca con imagen arriba e información debajo */
+.tarjeta-producto {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    overflow: hidden;
+    border: 1px solid #deded6;
+    border-radius: 8px;
+    background-color: #ffffff;
+}
+
+.imagen-producto {
+    flex-shrink: 0;
+}
+
+/* Muestra la imagen completa dentro de un espacio cuadrado */
+.imagen-producto img {
+    display: block;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: contain;
+}
+
+.informacion-producto {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    padding: 12px;
+}
+
+/* El nombre del producto mantiene la misma fuente que el texto general */
+.nombre-producto {
+    margin: 0 0 8px;
+    font-family: inherit;
+    font-size: 16px;
+    line-height: 1.4;
+    color: #2f472c;
+}
+
+.formato-producto {
+    margin: 0 0 12px;
+    font-size: 14px;
+    color: #595959;
+}
+
+/* Alinea el precio y el botón en la última fila de la tarjeta */
+.compra-categoria {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: auto;
+    padding-top: 8px;
+}
+
+.compra-categoria .precio-producto {
+    margin: 0;
+    font-size: 18px;
+    font-weight: bold;
+    white-space: nowrap;
+    color: #2f472c;
+}
+
+.compra-categoria form {
+    flex-shrink: 0;
+}
+
+/* Botón del carrito propio de las tarjetas de categorías */
+.compra-categoria .btn-carrito {
+    width: 44px;
+    min-height: 44px;
+    padding: 0;
+    border: 1px solid #2f472c;
+    border-radius: 8px;
+    background-color: #2f472c;
+    color: #ffffff;
+    font-size: 20px;
+}
+
+.compra-categoria .btn-carrito:hover {
+    background-color: #203b1d;
+}
+
+.producto-agotado {
+    font-size: 14px;
+    color: #595959;
+    text-align: right;
+}
+
+/* El aviso de categoría vacía ocupa todo el ancho de la cuadrícula */
+.sin-productos {
+    grid-column: 1 / -1;
+    margin: 0;
+    padding: 24px 0;
+    color: #595959;
+}
+
+/* *************************************************************
+   PAGINACIÓN navegación entre páginas
+   ************************************************************* */
+
+/* Separa la navegación del listado de productos */
+.paginacion-productos {
+    margin-top: 32px;
+}
+
+/* Permite que los controles pasen a otra línea cuando sea necesario */
+.paginacion-productos .pagination {
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 0;
+}
+
+/* Aspecto de los enlaces y números de página */
+.paginacion-productos .page-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 8px 12px;
+    border: 1px solid #deded6;
+    border-radius: 8px;
+    background-color: #ffffff;
+    color: #2f472c;
+    font-size: 16px;
+    text-decoration: none;
+}
+
+.paginacion-productos .page-link:hover {
+    background-color: #f7f4ed;
+}
+
+/* Destaca la página que se está visitando */
+.paginacion-productos .active > .page-link {
+    border-color: #2f472c;
+    background-color: #2f472c;
+    color: #ffffff;
+}
+
+/* Distingue los controles que no se pueden utilizar */
+.paginacion-productos .disabled > .page-link {
+    background-color: #f7f4ed;
+    color: #595959;
+}
+
+.paginacion-productos .page-link:focus-visible {
+    outline: 3px solid #2f472c;
+    outline-offset: 3px;
+}
+
+/* *************************************************************
+   RESPONSIVE VERSIÓN MÓVIL
+   ************************************************************* */
+/* Hasta 767 píxeles de ancho */
+
+@media (max-width: 767.98px) {
+
+    /* *************************************************************
+       CATEGORÍAS distribución + menú lateral
+       ************************************************************* */
+    /* Sustituye el menú lateral por el desplegable */
+    .pagina-categoria {
+        display: block;
+    }
+
+    .categorias-lateral {
+        display: none;
+    }
+
+    .contenido-categoria {
+        padding: 0 12px 24px;
+    }
+
+    .categorias-desplegable {
+        display: block;
+        margin-top: 16px;
+    }
+
+    /* *************************************************************
+       BANNER imagen + título de categoría
+       ************************************************************* */
+
+    /* Lleva el banner hasta los extremos de la página */
+    .banner-categoria {
+        min-height: 180px;
+        margin: 0 -12px;
+        padding: 24px;
+        border-radius: 0;
+    }
+
+    .banner-categoria h1 {
+        font-size: 28px;
+    }
+
+    .banner-categoria p {
+        font-size: 16px;
+    }
+    /* *************************************************************
+       RESULTADOS contador + ordenación
+       ************************************************************* */
+
+    /* Coloca la ordenación debajo del contador */
+    .barra-productos {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 16px 0;
+    }
+
+    .contador-productos,
+    .formulario-ordenacion label {
+        font-size: 14px;
+    }
+
+    .formulario-ordenacion {
+        width: 100%;
+        gap: 8px;
+    }
+
+    .formulario-ordenacion .form-select {
+        width: 192px;
+        font-size: 14px;
+    }
+    /* *************************************************************
+       PRODUCTOS tarjetas + precio + carrito
+       ************************************************************* */
+
+    .productos-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+    }
+
+    .informacion-producto {
+        padding: 10px;
+    }
+
+    .nombre-producto {
+        font-size: 14px;
+    }
+
+    .formato-producto {
+        font-size: 12px;
+    }
+
+    .compra-categoria {
+        gap: 6px;
+    }
+
+    .compra-categoria .precio-producto {
+        font-size: 16px;
+    }
+    /* *************************************************************
+       PAGINACIÓN navegación entre páginas
+       ************************************************************* */
+
+    .paginacion-productos {
+        margin-top: 24px;
+    }
+
+    .paginacion-productos .pagination {
+        gap: 4px;
+    }
+
+    .paginacion-productos .page-link {
+        font-size: 14px;
+    }
+}
+
+/* *************************************************************
+   RESPONSIVE VERSIÓN TABLET
+   ************************************************************* */
+/* De 768 a 991 píxeles de ancho */
+
+@media (min-width: 768px) and (max-width: 991.98px) {
+
+    /* *************************************************************
+       CATEGORÍAS distribución + menú lateral
+       ************************************************************* */
+    /* Sustituye el menú lateral por el desplegable */
+    .pagina-categoria {
+        display: block;
+    }
+
+    .categorias-lateral {
+        display: none;
+    }
+
+    .categorias-desplegable {
+        display: block;
+        margin-top: 16px;
+    }
+
+    /* *************************************************************
+       BANNER imagen + título de categoría
+       ************************************************************* */
+    .banner-categoria {
+        min-height: 200px;
+        margin: 0 -16px;
+        padding: 32px;
+        border-radius: 0;
+    }
+
+    .banner-categoria h1 {
+        font-size: 36px;
+    }
+
+    .banner-categoria p {
+        font-size: 16px;
+    }
+
+    /* *************************************************************
+       RESULTADOS contador + ordenación
+       ************************************************************* */
+
+    .barra-productos {
+        gap: 12px;
+        padding: 20px 0;
+    }
+
+    .contador-productos,
+    .formulario-ordenacion label {
+        font-size: 14px;
+    }
+
+    .formulario-ordenacion .form-select {
+        width: 208px;
+        font-size: 14px;
+    }
+
+    /* *************************************************************
+       PRODUCTOS tarjetas + precio + carrito
+       ************************************************************* */
+
+    .productos-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 16px;
+    }
+
+    /* *************************************************************
+       PAGINACIÓN navegación entre páginas
+       ************************************************************* */
+
+    .paginacion-productos {
+        margin-top: 24px;
+    }
+}

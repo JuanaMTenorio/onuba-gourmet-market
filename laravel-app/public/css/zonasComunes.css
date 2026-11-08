@@ -1,0 +1,530 @@
+/* *************************************************************
+   ESTILOS GENERALES DE TODA LA WEB
+   ************************************************************* */
+
+/* Conserva el color de fondo que utiliza el carrito */
+:root {
+    --color-fondo-crema: #f7f4ed;
+}
+
+/* Incluye relleno y borde dentro del tamaño del elemento */
+* {
+    box-sizing: border-box;
+}
+
+/* Fuente y colores generales de la web */
+body {
+    margin: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+    color: #333333;
+    background-color: #ffffff;
+    overflow-wrap: anywhere;
+}
+
+/* Evita que las imágenes superen el ancho de su contenedor */
+img {
+    max-width: 100%;
+    height: auto;
+}
+
+/* Deja espacio al saltar directamente al contenido principal */
+#contenido {
+    scroll-margin-top: 1rem;
+}
+
+/* *************************************************************
+   ACCESIBILIDAD navegación con teclado
+   ************************************************************* */
+/* Permite saltar la cabecera y acceder al contenido principal */
+.saltar-contenido {
+    position: absolute;
+    left: 8px;
+    top: -60px;
+    z-index: 2000;
+    background-color: #ffffff;
+    color: #2f472c;
+    padding: 10px 16px;
+    border: 2px solid #2f472c;
+    border-radius: 4px;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.saltar-contenido:focus {
+    top: 8px;
+}
+
+/* Señala el elemento seleccionado al navegar con el teclado */
+a:focus-visible,
+button:focus-visible,
+select:focus-visible,
+input:focus-visible {
+    outline: 3px solid #2f472c;
+    outline-offset: 3px;
+    border-radius: 4px;
+}
+
+/* Respeta la preferencia de reducir las animaciones */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        transition: none !important;
+        animation: none !important;
+    }
+}
+
+
+/* *************************************************************
+   BARRA SUPERIOR tres características
+   ************************************************************* */
+/* Fondo, texto y espacio interior de la franja superior */
+.barra-superior {
+    background-color: #2f472c;
+    color: #ffffff;
+    font-size: 15px;
+    padding: 8px 0;
+}
+
+/* Distribuye los tres mensajes en columnas del mismo ancho */
+.barra-contenido {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+}
+
+/* Coloca cada icono junto al texto de su mensaje */
+.barra-contenido > span {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 6px;
+}
+
+/* Mantiene visibles los mensajes que Bootstrap oculta en móvil */
+.barra-contenido > .mensaje-superior-adicional {
+    display: flex !important;
+}
+
+
+
+/* *************************************************************
+   CABECERA logo + menú + iconos
+   ************************************************************* */
+/* Fondo y espacio interior de la cabecera */
+.cabecera-principal {
+    background-color: #ffffff;
+    padding: 12px 0;
+}
+
+/* Distribuye el logo, el menú y los iconos en ordenador */
+.cabecera-contenido {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas: "logo menu iconos";
+    align-items: center;
+    gap: 24px;
+}
+
+/* Zona y tamaño del logo */
+.logo-enlace {
+    grid-area: logo;
+}
+
+.logo-onuba {
+    display: block;
+    width: 240px;
+}
+
+/* El menú se mantiene visible en ordenador aunque tenga la clase collapse */
+.menu-principal.collapse:not(.show) {
+    display: flex;
+}
+
+/* Distribuye los enlaces del menú y permite que ocupen otra línea */
+.menu-principal {
+    grid-area: menu;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px 20px;
+}
+
+.menu-principal a {
+    padding: 8px 0;
+    color: #333333;
+    text-decoration: none;
+}
+
+.menu-principal a:hover {
+    color: #2f472c;
+    text-decoration: underline;
+    text-underline-offset: 4px;
+}
+
+/* Agrupa los iconos de búsqueda, cuenta, carrito y menú */
+.iconos-cabecera {
+    grid-area: iconos;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* Mantiene una zona cómoda para pulsar los iconos */
+.iconos-cabecera a,
+.btn-menu {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background-color: transparent;
+    color: #2f472c;
+    font-size: 22px;
+    text-decoration: none;
+}
+
+.iconos-cabecera a:hover,
+.btn-menu:hover {
+    background-color: #f7f4ed;
+}
+
+/* Muestra el número de unidades sobre el icono del carrito */
+.contador-carrito {
+    position: absolute;
+    top: 0;
+    right: 0;
+    min-width: 20px;
+    padding: 2px 5px;
+    border-radius: 50%;
+    background-color: #2f472c;
+    color: #ffffff;
+    font-size: 12px;
+    line-height: 1;
+    text-align: center;
+}
+
+/* *************************************************************
+   FOOTER logo + información + mi cuenta + redes sociales
+   ************************************************************* */
+
+/* Fondo verde con las ramas de olivo en los extremos */
+.pie-pagina {
+    background-color: #203b1d;
+    background-image: url('../imagen/fondos/footer-olivo.webp');
+    background-position: center;
+    background-size: 100% 100%;
+    color: #f3ead5;
+}
+
+/* Distribuye las cuatro zonas del footer en ordenador */
+.pie-contenido {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr 1.1fr 0.8fr;
+    gap: 48px;
+    max-width: 1320px;
+    margin: 0 auto;
+    padding: 28px 64px 24px;
+}
+
+/* Logo y descripción de la marca */
+.pie-logo {
+    display: inline-block;
+    margin-bottom: 12px;
+}
+
+.pie-logo img {
+    display: block;
+    width: 200px;
+    /* Conserva el filtro que da al logo el tono crema del texto */
+    filter: brightness(0) saturate(100%) invert(93%) sepia(10%) saturate(608%) hue-rotate(351deg) brightness(100%) contrast(91%);
+}
+
+.pie-marca p {
+    max-width: 290px;
+    margin: 0 0 10px;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.pie-marca .pie-origen {
+    color: #d7c08b;
+}
+
+/* Alinea por abajo las columnas de información, cuenta y redes */
+.pie-columna {
+    align-self: end;
+}
+
+.pie-columna h2 {
+    margin: 4px 0 12px;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 20px;
+    font-weight: bold;
+}
+
+.pie-columna ul,
+.pie-legales {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.pie-columna li {
+    margin-bottom: 6px;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+/* Enlaces claros para mantener el contraste sobre el fondo verde */
+.pie-pagina a {
+    color: #f3ead5;
+    text-decoration: none;
+}
+
+.pie-pagina a:hover {
+    color: #ffffff;
+    text-decoration: underline;
+    text-underline-offset: 4px;
+}
+
+.pie-pagina a:focus-visible {
+    outline: 3px solid #f3ead5;
+    outline-offset: 4px;
+}
+
+/* Coloca el icono junto al nombre de cada red social */
+.pie-redes span {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.pie-redes i {
+    font-size: 18px;
+}
+
+/* Franja inferior con los derechos y los textos legales */
+.pie-base {
+    border-top: 1px solid rgba(243, 234, 213, 0.25);
+    background-color: rgba(17, 36, 16, 0.65);
+}
+
+.pie-base-contenido {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    max-width: 1320px;
+    margin: 0 auto;
+    padding: 14px 64px;
+    font-size: 12px;
+}
+
+.pie-base-contenido p {
+    margin: 0;
+}
+
+.pie-legales {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 16px;
+}
+
+/* *************************************************************
+   RESPONSIVE VERSIÓN MÓVIL
+   ************************************************************* */
+/* Hasta 767 píxeles de ancho */
+
+@media (max-width: 767.98px) {
+    /* *************************************************************
+       BARRA SUPERIOR tres características
+       ************************************************************* */
+    .barra-superior {
+        font-size: 11px;
+    }
+
+    .barra-contenido {
+        gap: 8px;
+    }
+
+    .barra-contenido > span {
+        gap: 4px;
+        line-height: 1.3;
+    }
+
+    /* *************************************************************
+       CABECERA logo + menú + iconos
+       ************************************************************* */
+    /* Cabecera con logo e iconos arriba y menú desplegable debajo */
+    .cabecera-contenido {
+        grid-template-columns: minmax(0, 1fr) auto;
+        grid-template-areas: "logo iconos" "menu menu";
+        gap: 8px;
+    }
+
+    .logo-onuba {
+        width: 140px;
+    }
+
+    .iconos-cabecera {
+        gap: 0;
+    }
+
+    /* Bootstrap muestra el menú al pulsar la hamburguesa */
+    .menu-principal.collapse:not(.show) {
+        display: none;
+    }
+
+    .menu-principal {
+        flex-direction: column;
+        gap: 0;
+    }
+
+    .menu-principal a {
+        padding: 12px 4px;
+        border-bottom: 1px solid #e6e1d6;
+    }
+    /* *************************************************************
+       FOOTER logo + información + mi cuenta + redes sociales
+       ************************************************************* */
+
+    /* Coloca Información y Mi cuenta una junto a la otra */
+    .pie-contenido {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+        padding: 24px 20px;
+    }
+
+    /* La marca ocupa toda la primera fila */
+    .pie-marca {
+        grid-column: 1 / -1;
+        text-align: center;
+    }
+
+    .pie-marca p {
+        max-width: none;
+    }
+
+    .pie-columna {
+        align-self: start;
+        text-align: center;
+    }
+
+    /* Las redes ocupan otra fila debajo de Información y Mi cuenta */
+    .pie-columna-redes {
+        grid-column: 1 / -1;
+    }
+
+    .pie-redes {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 8px 16px;
+    }
+
+    .pie-redes li {
+        margin: 0;
+    }
+
+    .pie-redes span {
+        gap: 6px;
+    }
+
+    /* Mantiene las ramas en la parte inferior sin deformarlas */
+    .pie-pagina {
+        background-size: 100% auto;
+        background-position: center bottom;
+        background-repeat: no-repeat;
+    }
+
+    .pie-columna h2 {
+        margin-bottom: 10px;
+    }
+
+    .pie-base-contenido {
+        flex-direction: column;
+        gap: 10px;
+        padding: 14px 20px 20px;
+        text-align: center;
+    }
+
+    .pie-legales {
+        justify-content: center;
+    }
+}
+
+/* *************************************************************
+   RESPONSIVE VERSIÓN TABLET
+   ************************************************************* */
+/* De 768 a 991 píxeles de ancho */
+@media (min-width: 768px) and (max-width: 991.98px) {
+    /* *************************************************************
+       BARRA SUPERIOR tres características
+       ************************************************************* */
+
+    /* La barra superior conserva los estilos generales */
+
+    /* *************************************************************
+       CABECERA logo + menú + iconos
+       ************************************************************* */
+    /* Cabecera con logo e iconos arriba y menú desplegable debajo */
+    .cabecera-contenido {
+        grid-template-columns: minmax(0, 1fr) auto;
+        grid-template-areas: "logo iconos" "menu menu";
+        gap: 12px;
+    }
+
+    .logo-onuba {
+        width: 200px;
+    }
+
+    .menu-principal.collapse:not(.show) {
+        display: none;
+    }
+
+    .menu-principal {
+        flex-direction: column;
+        gap: 0;
+    }
+
+    .menu-principal a {
+        padding: 12px 4px;
+        border-bottom: 1px solid #e6e1d6;
+    }
+
+    /* *************************************************************
+       FOOTER logo + información + mi cuenta + redes sociales
+       ************************************************************* */
+
+    /* Distribuye las cuatro zonas en dos filas de dos */
+    .pie-contenido {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 24px;
+        padding: 28px 40px;
+        text-align: center;
+    }
+
+    .pie-marca p {
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .pie-base-contenido {
+        flex-direction: column;
+        gap: 10px;
+        padding: 14px 40px;
+        text-align: center;
+    }
+
+    .pie-legales {
+        justify-content: center;
+    }
+}

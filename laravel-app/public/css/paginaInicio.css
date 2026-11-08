@@ -1,0 +1,913 @@
+/* *************************************************************
+   PORTADA imagen principal + título + botón
+   ************************************************************* */
+/* Imagen de fondo y distribución de la portada en ordenador */
+.hero {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    min-height: 380px;
+    aspect-ratio: 3 / 1;
+    padding: 48px 0;
+    background-image:
+        linear-gradient(90deg, rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0)),
+        url('../imagen/portada/hero.webp');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+/* Limita el ancho del contenido para facilitar la lectura */
+.hero-contenido {
+    max-width: 900px;
+}
+
+/* Título principal de la página en Georgia */
+.hero-contenido h1 {
+    margin: 0;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 46px;
+    font-weight: 600;
+    line-height: 1.15;
+    color: #ffffff;
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+
+/* Texto que acompaña al título */
+.hero-contenido p {
+    margin: 20px 0 30px;
+    font-size: 22px;
+    color: #ffffff;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+
+/* Botón exclusivo de la portada */
+.btn-hero {
+    display: inline-block;
+    padding: 12px 26px;
+    border: 2px solid #ffffff;
+    border-radius: 8px;
+    background-color: #2f472c;
+    color: #ffffff;
+    font-size: 18px;
+    text-decoration: none;
+}
+
+.btn-hero:hover {
+    background-color: #ffffff;
+    color: #2f472c;
+}
+
+/* Permite localizar el botón al navegar con el teclado */
+.btn-hero:focus-visible {
+    outline: 3px solid #ffffff;
+    outline-offset: 4px;
+}
+
+/* *************************************************************
+   VENTAJAS cuatro características
+   ************************************************************* */
+/* Fondo y espacio interior de la sección */
+.ventajas {
+    background-color: #f7f4ed;
+    padding: 24px 0;
+}
+
+/* Coloca las cuatro ventajas en una fila en ordenador */
+.ventajas-contenido {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+/* Coloca el icono junto al texto de cada ventaja */
+.ventaja {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.ventaja i {
+    flex-shrink: 0;
+    font-size: 28px;
+    color: #2f472c;
+}
+
+/* Título y descripción de cada ventaja */
+.ventaja strong {
+    display: block;
+    font-size: 15px;
+    color: #2f472c;
+}
+
+.ventaja span {
+    display: block;
+    margin-top: 4px;
+    font-size: 14px;
+    color: #595959;
+}
+
+/* *************************************************************
+   CATEGORÍAS título + tarjetas
+   ************************************************************* */
+/* Fondo y espacio interior de la sección */
+.categorias {
+    padding: 48px 0;
+    background-color: #ffffff;
+}
+
+.categorias .container {
+    max-width: 2000px;
+}
+
+/* Título y descripción de las categorías */
+.categorias .titulo-seccion {
+    margin-bottom: 32px;
+    text-align: center;
+}
+
+.categorias .titulo-seccion h2 {
+    margin: 0 0 12px;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 36px;
+    color: #2f472c;
+}
+
+.categorias .titulo-seccion p {
+    margin: 0;
+    color: #595959;
+}
+
+/* Coloca las seis categorías en una fila en ordenador */
+.categorias-grid {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 20px;
+}
+
+/* Toda la tarjeta permite acceder a la categoría */
+.categoria-enlace {
+    display: block;
+    color: #2f472c;
+    text-decoration: none;
+}
+
+/* Mantiene las imágenes cuadradas y con las esquinas redondeadas */
+.categoria-card img {
+    display: block;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.categoria-card h3 {
+    margin: 12px 0 0;
+    font-size: 18px;
+    text-align: center;
+}
+
+.categoria-enlace:hover h3 {
+    text-decoration: underline;
+    text-underline-offset: 4px;
+}
+
+/* Permite localizar la tarjeta al navegar con el teclado */
+.categoria-enlace:focus-visible {
+    outline-offset: 4px;
+    border-radius: 8px;
+}
+
+/* *************************************************************
+   PRODUCTOS DESTACADOS título + tarjetas
+   ************************************************************* */
+
+/* Fondo y espacio interior de la sección */
+.productos-destacados {
+    padding: 48px 0;
+    background-color: #f7f4ed;
+}
+
+.productos-destacados .container {
+    max-width: 2000px;
+}
+
+/* Título de la sección en Georgia */
+.productos-destacados .titulo-seccion {
+    margin-bottom: 32px;
+    text-align: center;
+}
+
+.productos-destacados .titulo-seccion h2 {
+    margin: 0;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 36px;
+    color: #2f472c;
+}
+
+/* Distribuye los seis productos en una fila en ordenador */
+.productos-destacados-grid {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 20px;
+}
+
+/* Tarjetas blancas con el contenido organizado de arriba hacia abajo */
+.productos-destacados .tarjeta-producto {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    overflow: hidden;
+    border: 1px solid #deded6;
+    border-radius: 8px;
+    background-color: #ffffff;
+}
+
+/* Muestra el producto completo dentro de una imagen cuadrada */
+.productos-destacados .imagen-producto img {
+    display: block;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: contain;
+}
+
+.productos-destacados .informacion-producto {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    padding: 10px;
+}
+
+.productos-destacados .nombre-producto {
+    margin: 0 0 8px;
+    font-size: 16px;
+    line-height: 1.4;
+    color: #2f472c;
+}
+
+.productos-destacados .formato-producto {
+    margin: 0 0 12px;
+    font-size: 14px;
+    color: #595959;
+}
+
+/* Mantiene el precio a la izquierda y el carrito a la derecha */
+.compra-destacado {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    margin-top: auto;
+    padding-top: 8px;
+}
+
+.compra-destacado .precio-producto {
+    margin: 0;
+    padding: 0;
+    font-weight: bold;
+    white-space: nowrap;
+    color: #2f472c;
+}
+
+.compra-destacado form {
+    flex-shrink: 0;
+}
+
+/* Botón del carrito exclusivo de las tarjetas destacadas */
+.compra-destacado .btn-carrito {
+    width: 44px;
+    min-height: 44px;
+    padding: 0;
+    border: 1px solid #2f472c;
+    border-radius: 8px;
+    background-color: #2f472c;
+    color: #ffffff;
+    font-size: 20px;
+}
+
+.compra-destacado .btn-carrito:hover {
+    background-color: #203b1d;
+}
+
+.productos-destacados .producto-agotado {
+    font-size: 12px;
+    color: #595959;
+    text-align: right;
+}
+
+/* *************************************************************
+   SABORES DE NUESTRA TIERRA título + texto + botón + imagen
+   ************************************************************* */
+
+/* Fondo de la sección y distribución del texto junto a los paisajes */
+.sabores-tierra {
+    background-color: #f7f4ed;
+    padding: 0 16px;
+}
+
+.sabores-contenido {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: stretch;
+}
+
+/* Papel ocre con espacio a la izquierda para las ramas de olivo */
+.sabores-texto {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    align-self: stretch;
+    padding: 24px 32px 24px 80px;
+    background-image: url('../imagen/secciones/papel-ocre-olivo.webp?v=20261107-4');
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+}
+
+/* Título de la sección en Georgia */
+.sabores-texto h2 {
+    margin: 0 0 12px;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 36px;
+    font-style: italic;
+    color: #2f472c;
+}
+
+.sabores-texto p {
+    margin: 0 0 16px;
+}
+
+.sabores-subtitulo {
+    font-weight: 600;
+}
+
+/* Botón propio de esta sección */
+.sabores-tierra .btn-sabores {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    min-height: 44px;
+    padding: 10px 22px;
+    border-radius: 8px;
+    background-color: #875a17;
+    color: #ffffff;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.sabores-tierra .btn-sabores:hover {
+    background-color: #694410;
+}
+
+.sabores-tierra .btn-sabores:focus-visible {
+    outline-offset: 4px;
+}
+
+/* La imagen ocupa el mismo espacio que el papel del texto en ordenador */
+.sabores-paisajes {
+    min-width: 0;
+    margin: 0;
+}
+
+.sabores-paisajes img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* *************************************************************
+   PRODUCTORES foto + texto + mapa
+   ************************************************************* */
+
+/* Mantiene el fondo crema y el espacio inferior dentro de la sección */
+.productores {
+    padding: 32px 0;
+    background-color: #f7f4ed;
+}
+
+/* Respeta el orden del HTML: foto, contenido y mapa */
+.productores-contenido {
+    display: grid;
+    grid-template-columns: minmax(0, 3fr) minmax(0, 4fr) minmax(0, 3fr);
+    align-items: center;
+    gap: 24px;
+}
+
+/* Conserva completas las imágenes de ambos extremos */
+.productores-foto,
+.productores-mapa {
+    min-width: 0;
+}
+
+.productores-foto img,
+.productores-mapa img {
+    display: block;
+    width: 100%;
+    max-height: 280px;
+    object-fit: contain;
+}
+
+.productores-texto {
+    min-width: 0;
+    padding: 16px;
+}
+
+/* Título de la sección en Georgia */
+.productores-texto h2 {
+    margin: 0 0 12px;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 36px;
+    color: #2f472c;
+}
+
+.productores-texto > p {
+    margin: 0 0 24px;
+    color: #595959;
+}
+
+/* Distribuye los tres valores de los productores */
+.productores-valores {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+    margin: 0 0 24px;
+    padding: 0;
+    list-style: none;
+}
+
+.productores-valores i {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 24px;
+    color: #875a17;
+}
+
+.productores-valores h3 {
+    margin: 0 0 8px;
+    font-size: 14px;
+    font-weight: bold;
+    color: #2f472c;
+}
+
+.productores-valores p {
+    margin: 0;
+    font-size: 14px;
+    color: #595959;
+}
+
+/* Botón propio de la sección de productores */
+.productores .btn-sabores {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    min-height: 44px;
+    padding: 10px 22px;
+    border-radius: 8px;
+    background-color: #875a17;
+    color: #ffffff;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.productores .btn-sabores:hover {
+    background-color: #694410;
+}
+
+.productores .btn-sabores:focus-visible {
+    outline-offset: 4px;
+}
+
+/* *************************************************************
+   RESPONSIVE VERSIÓN MÓVIL
+   ************************************************************* */
+/* Hasta 767 píxeles de ancho */
+
+@media (max-width: 767.98px) {
+    /* *************************************************************
+       PORTADA imagen principal + título + botón
+       ************************************************************* */
+    /* Oscurece toda la imagen para que el texto blanco se lea bien */
+    .hero {
+        min-height: 320px;
+        aspect-ratio: auto;
+        padding: 32px 0;
+        background-image:
+            linear-gradient(rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.55)),
+            url('../imagen/portada/hero.webp');
+    }
+
+    .hero-contenido h1 {
+        font-size: 28px;
+    }
+
+    .hero-contenido p {
+        font-size: 16px;
+    }
+
+    .btn-hero {
+        font-size: 16px;
+    }
+
+    /* *************************************************************
+       VENTAJAS cuatro características
+       ************************************************************* */
+    /* Reparte las ventajas en dos filas de dos */
+    .ventajas {
+        padding: 16px 0;
+    }
+
+    .ventajas-contenido {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px 12px;
+    }
+
+    .ventaja {
+        gap: 8px;
+    }
+
+    .ventaja i {
+        font-size: 22px;
+    }
+
+    .ventaja strong {
+        font-size: 13px;
+    }
+
+    /* Conserva solo el icono y el título para ocupar menos espacio */
+    .ventaja span {
+        display: none;
+    }
+
+    /* *************************************************************
+       CATEGORÍAS título + tarjetas
+       ************************************************************* */
+    .categorias {
+        padding: 24px 0;
+    }
+
+    .categorias .titulo-seccion {
+        margin-bottom: 24px;
+    }
+
+    .categorias .titulo-seccion h2 {
+        font-size: 28px;
+    }
+
+    .categorias .titulo-seccion p {
+        font-size: 14px;
+    }
+
+    /* Reparte las seis categorías en dos filas de tres */
+    .categorias-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 16px 8px;
+    }
+
+    .categoria-card h3 {
+        margin-top: 8px;
+        font-size: 14px;
+    }
+
+    /* *************************************************************
+       PRODUCTOS DESTACADOS título + tarjetas
+       ************************************************************* */
+    .productos-destacados {
+        padding: 24px 0;
+    }
+
+    .productos-destacados .titulo-seccion {
+        margin-bottom: 24px;
+    }
+
+    .productos-destacados .titulo-seccion h2 {
+        font-size: 28px;
+    }
+
+    /* Reparte los seis productos en dos filas de tres */
+    .productos-destacados-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 16px 8px;
+    }
+
+    .productos-destacados .informacion-producto {
+        padding: 5px;
+    }
+
+    .productos-destacados .nombre-producto {
+        font-size: 13px;
+    }
+
+    .productos-destacados .formato-producto {
+        font-size: 12px;
+    }
+
+    .compra-destacado {
+        gap: 4px;
+    }
+
+    /* El precio se adapta al ancho disponible en cada tarjeta */
+    .compra-destacado .precio-producto {
+        font-size: clamp(10px, 2.8vw, 16px);
+    }
+
+    .compra-destacado .btn-carrito {
+        width: 32px;
+        font-size: 18px;
+    }
+
+    /* *************************************************************
+       SABORES DE NUESTRA TIERRA título + texto + botón + imagen
+       ************************************************************* */
+    /* Coloca el texto arriba y los paisajes debajo */
+    .sabores-tierra {
+        padding: 0 14px;
+    }
+
+    .sabores-contenido {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .sabores-texto {
+        padding: 24px 20px 24px 64px;
+    }
+
+    .sabores-texto h2 {
+        font-size: 24px;
+    }
+
+    /* En móvil conserva la imagen completa y su altura proporcional */
+    .sabores-paisajes img {
+        height: auto;
+        max-height: 260px;
+        object-fit: contain;
+    }
+
+    .sabores-texto p {
+        font-size: 14px;
+    }
+
+    .sabores-tierra .btn-sabores {
+        gap: 8px;
+        padding: 10px 16px;
+        font-size: 12px;
+    }
+
+    /* *************************************************************
+       PRODUCTORES foto + texto + mapa
+       ************************************************************* */
+    /* Coloca la información arriba y las dos imágenes debajo */
+    .productores {
+        padding: 24px 0;
+    }
+
+    .productores-contenido {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-areas: "texto texto" "foto mapa";
+        gap: 16px 2px;
+        padding: 0 2px;
+    }
+
+    .productores-texto {
+        grid-area: texto;
+        padding: 0 12px;
+        text-align: center;
+    }
+
+    .productores-foto {
+        grid-area: foto;
+    }
+
+    .productores-mapa {
+        grid-area: mapa;
+    }
+
+    /* Amplía las imágenes para rellenar su espacio sin deformarlas */
+    .productores-foto img,
+    .productores-mapa img {
+        height: 180px;
+        object-fit: cover;
+    }
+
+    /* Separa el mapa de los bordes de su imagen */
+    .productores-mapa img {
+        padding: 8px;
+    }
+
+    .productores-texto h2 {
+        font-size: 24px;
+    }
+
+    .productores-texto > p {
+        font-size: 14px;
+    }
+
+    /* Coloca los valores en una columna para facilitar su lectura */
+    .productores-valores {
+        grid-template-columns: minmax(0, 1fr);
+        text-align: left;
+    }
+
+    /* Coloca el icono y el título en una fila y la descripción debajo */
+    .productores-valores li {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        align-items: center;
+        gap: 2px 8px;
+    }
+
+    .productores-valores i,
+    .productores-valores h3 {
+        margin: 0;
+    }
+
+    .productores-valores p {
+        grid-column: 1 / -1;
+    }
+
+    .productores .btn-sabores {
+        gap: 8px;
+        padding: 10px 16px;
+        font-size: 12px;
+    }
+}
+
+/* *************************************************************
+   RESPONSIVE VERSIÓN TABLET
+   ************************************************************* */
+/* De 768 a 991 píxeles de ancho */
+
+@media (min-width: 768px) and (max-width: 991.98px) {
+    /* *************************************************************
+       PORTADA imagen principal + título + botón
+       ************************************************************* */
+    .hero {
+        min-height: 360px;
+        aspect-ratio: auto;
+        padding: 40px 0;
+        background-image:
+            linear-gradient(rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.55)),
+            url('../imagen/portada/hero.webp');
+    }
+
+    .hero-contenido h1 {
+        font-size: 36px;
+    }
+
+    .hero-contenido p {
+        font-size: 18px;
+    }
+
+    /* *************************************************************
+       VENTAJAS cuatro características
+       ************************************************************* */
+    /* Mantiene las cuatro ventajas en una fila con tamaños menores */
+    .ventajas {
+        padding: 20px 0;
+    }
+
+    .ventajas-contenido {
+        gap: 12px;
+    }
+
+    .ventaja {
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .ventaja i {
+        font-size: 24px;
+    }
+
+    .ventaja strong {
+        font-size: 13px;
+    }
+
+    .ventaja span {
+        font-size: 12px;
+    }
+
+    /* *************************************************************
+       CATEGORÍAS título + tarjetas
+       ************************************************************* */
+    .categorias {
+        padding: 32px 0;
+    }
+
+    .categorias .titulo-seccion h2 {
+        font-size: 32px;
+    }
+
+    /* Reparte las seis categorías en dos filas de tres */
+    .categorias-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .categoria-card h3 {
+        font-size: 16px;
+    }
+
+    /* *************************************************************
+       PRODUCTOS DESTACADOS título + tarjetas
+       ************************************************************* */
+    .productos-destacados {
+        padding: 32px 0;
+    }
+
+    .productos-destacados .titulo-seccion h2 {
+        font-size: 32px;
+    }
+
+    /* Reparte los seis productos en dos filas de tres */
+    .productos-destacados-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    /* *************************************************************
+       SABORES DE NUESTRA TIERRA título + texto + botón + imagen
+       ************************************************************* */
+    /* Separa los dos bloques de los bordes de la pantalla */
+    .sabores-tierra {
+        padding: 0 12px;
+    }
+
+    /* Coloca el texto arriba para evitar columnas demasiado estrechas */
+    .sabores-contenido {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .sabores-texto {
+        padding: 28px 32px 28px 80px;
+    }
+
+    .sabores-texto h2 {
+        font-size: 32px;
+    }
+
+    /* En tablet conserva la imagen completa y su altura proporcional */
+    .sabores-paisajes img {
+        height: auto;
+        object-fit: contain;
+    }
+
+    /* *************************************************************
+       PRODUCTORES foto + texto + mapa
+       ************************************************************* */
+    /* Coloca la información arriba y las dos imágenes debajo */
+    .productores-contenido {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-areas: "texto texto" "foto mapa";
+        padding: 0 16px;
+    }
+
+    .productores-texto {
+        grid-area: texto;
+        padding: 0 16px;
+        text-align: center;
+    }
+
+    .productores-foto {
+        grid-area: foto;
+    }
+
+    .productores-mapa {
+        grid-area: mapa;
+    }
+
+    /* Iguala el espacio de las imágenes sin recortarlas */
+    .productores-foto img,
+    .productores-mapa img {
+        height: 240px;
+    }
+
+    .productores-texto h2 {
+        font-size: 32px;
+    }
+
+    .productores-valores {
+        text-align: left;
+    }
+
+    /* Coloca el icono y el título en una fila y la descripción debajo */
+    .productores-valores li {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .productores-valores i,
+    .productores-valores h3 {
+        margin: 0;
+    }
+
+    .productores-valores p {
+        grid-column: 1 / -1;
+    }
+}

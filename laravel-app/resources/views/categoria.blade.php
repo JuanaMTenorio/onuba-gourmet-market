@@ -2,6 +2,11 @@
 
 @extends('layouts.app')
 
+{{-- Estilos de la página de categorías --}}
+@push('estilos')
+    <link rel="stylesheet" href="{{ asset('css/paginaCategorias.css') }}?v={{ filemtime(public_path('css/paginaCategorias.css')) }}">
+@endpush
+
 {{-- Título de la pestaña del navegador --}}
 @section('titulo', $categoria->nombre . ' | ONUBA GOURMET MARKET')
 
@@ -156,7 +161,7 @@
 
 @push('scripts')
 <script>
-    // Ordenar al seleccionar en todos los dispositivos. Sin JavaScript se conserva el botón.
+    // Ordenar al seleccionar en todos los dispositivos. Sin JavaScript se conserva el botón
     const selectorOrden = document.getElementById('orden-productos');
     if (selectorOrden) {
         selectorOrden.form.classList.add('ordenacion-automatica');

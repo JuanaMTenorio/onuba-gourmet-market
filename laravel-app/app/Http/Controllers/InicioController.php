@@ -4,7 +4,8 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB; //DB es la puerta que proporciona Laravel para hablar con la base de datos.
+use App\Models\Categoria;
+use App\Models\Producto;
 
 // Clase que hereda del controlador base (Controller) de Laravel
 class InicioController extends Controller
@@ -12,17 +13,19 @@ class InicioController extends Controller
     // Creo el método, que al ejecutarse:
     public function index()
     {
-        $categorias = DB::table('categorias')->get(); // Consulta y obtiene la info 'categorias' de la base de datos SELECT * FROM categorias;
+        // Obtiene las categorías utilizando el modelo Categoria
+        $categorias = Categoria::all();
 
-        $destacados = DB::table('productos as p')
-            ->join('categorias as c', 'c.id', '=', 'p.categoria_id')
-            ->where('p.destacado', 1)
-            ->where('p.activo', 1)
-            ->where('c.activa', 1)
-            ->orderBy('c.id')
-            ->orderBy('p.id')
+        // Muestra hasta seis productos destacados y activos de categorías activas
+        // whereHas comprueba la categoría relacionada con cada producto
+        $destacados = Producto::where('destacado', true)
+            ->where('activo', true)
+            ->whereHas('categoria', function ($consultaCategoria) {
+                $consultaCategoria->where('activa', true);
+            })
+            ->orderBy('categoria_id')
+            ->orderBy('id')
             ->limit(6)
-            ->select('p.*')
             ->get();
 
         return view('inicio', compact('categorias', 'destacados'));
@@ -32,32 +35,35 @@ class InicioController extends Controller
     public function categoria(Request $request, $slug)
     {
         // 1. Buscar la categoría seleccionada por su slug
-        $categoria = DB::table('categorias')
-            ->where('slug', $slug)
+        $categoria = Categoria::where('slug', $slug)
             ->where('activa', 1)
             ->firstOrFail();
 
         // 2. Obtener las categorías activas para el menú lateral
-        $categorias = DB::table('categorias')
-            ->where('activa', 1)
+        $categorias = Categoria::where('activa', true)
             ->get();
 
-        // Solo se aceptan estas columnas y direcciones de ordenación.
-        [$columna, $direccion] = match ($request->query('orden')) {
-            'precio_asc' => ['precio', 'asc'],
-            'precio_desc' => ['precio', 'desc'],
-            default => ['nombre', 'asc'],
-        };
+        // Solo permite ordenar por las opciones definidas en el catálogo
+        $columna = 'nombre';
+        $direccion = 'asc';
+
+        if ($request->query('orden') === 'precio_asc') {
+            $columna = 'precio';
+            $direccion = 'asc';
+        } elseif ($request->query('orden') === 'precio_desc') {
+            $columna = 'precio';
+            $direccion = 'desc';
+        }
 
         // 3. Consultar los productos de la categoría seleccionada
-        $productos = DB::table('productos')
-            ->where('categoria_id', $categoria->id)
+        // Utiliza la relación productos definida en el modelo Categoria
+        $productos = $categoria->productos()
             ->where('activo', 1)
             ->orderBy($columna, $direccion)
             ->orderBy('id', 'asc')
             ->paginate(8);
 
-        // Banner propio de cada categoría, sin modificar la base de datos.
+        // Banner propio de cada categoría, sin modificar la base de datos
         $banners = [
             'aceites-de-oliva' => 'banner_aceites',
             'conservas-y-salazones' => 'banner_conservas_salazones',
@@ -69,7 +75,7 @@ class InicioController extends Controller
 
         $bannerCategoria = null;
         if (isset($banners[$categoria->slug])) {
-            // Prioriza WebP; permite incorporar los PNG originales directamente.
+            // Prioriza WebP y permite incorporar los PNG originales directamente
             foreach (['webp', 'png'] as $extension) {
                 $ruta = 'imagen/banners/' . $banners[$categoria->slug] . '.' . $extension;
                 if (is_file(public_path($ruta))) {

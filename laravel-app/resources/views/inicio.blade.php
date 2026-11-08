@@ -8,6 +8,11 @@
 
 
 @extends('layouts.app')
+
+{{-- Estilos de las secciones de la página principal --}}
+@push('estilos')
+    <link rel="stylesheet" href="{{ asset('css/paginaInicio.css') }}?v={{ filemtime(public_path('css/paginaInicio.css')) }}">
+@endpush
  
 {{-- Título de la pestaña (opcional: si lo quitas, se usa el de la plantilla) --}}
 @section('titulo', 'ONUBA GOURMET MARKET')
@@ -154,10 +159,12 @@
 {{-- Productores: fotografías decorativas y contenido accesible en HTML. --}}
 <section class="productores" aria-labelledby="titulo-productores">
     <div class="productores-contenido">
-        <div class="productores-mapa">
-            <img src="{{ asset('imagen/secciones/mapa-productores-huelva.webp') }}"
+        <div class="productores-foto">
+            {{-- La fecha de modificación obliga a cargar la imagen cuando se sustituye --}}
+            <img src="{{ asset('imagen/secciones/productor-dehesa-huelva.webp') }}?v={{ filemtime(public_path('imagen/secciones/productor-dehesa-huelva.webp')) }}"
                 width="1536" height="1024"
-                alt="" loading="lazy" decoding="async">
+                alt="Ganadero de espaldas junto a cerdos ibéricos en una dehesa de encinas."
+                loading="lazy" decoding="async">
         </div>
         <div class="productores-texto">
             <h2 id="titulo-productores">Conoce a nuestros productores</h2>
@@ -185,11 +192,10 @@
                 <i class="bi bi-arrow-right" aria-hidden="true"></i>
             </a>
         </div>
-        <div class="productores-foto">
-            <img src="{{ asset('imagen/secciones/productor-dehesa-huelva.webp') }}"
+        <div class="productores-mapa">
+            <img src="{{ asset('imagen/secciones/mapa-productores-huelva.webp') }}"
                 width="1536" height="1024"
-                alt="Ganadero de espaldas junto a cerdos ibéricos en una dehesa de encinas."
-                loading="lazy" decoding="async">
+                alt="" loading="lazy" decoding="async">
         </div>
     </div>
 </section>

@@ -31,6 +31,8 @@
 
         @if ($esDestacado ?? false)
         <div class="compra-destacado">
+        @else
+        <div class="compra-categoria">
         @endif
         <p class="precio-producto">
             {{ number_format($producto->precio, 2, ',', '.') }} €
@@ -38,18 +40,16 @@
 
         @if ($producto->stock > 0)
 
+        <form method="POST" action="{{ route('carrito.agregar', $producto->id) }}">
+        {{-- Laravel comprueba este token para proteger el formulario --}}
+        @csrf
         <button
-            type="button"
-            class="btn-carrito"
-            disabled
-            title="Funcionalidad del carrito pendiente de implementar">
+            type="submit"
+            class="btn-carrito">
             <i class="bi bi-cart3" aria-hidden="true"></i>
-            @if ($esDestacado ?? false)
             <span class="visually-hidden">Añadir al carrito: {{ $producto->nombre }}</span>
-            @else
-            Añadir al carrito
-            @endif
         </button>
+        </form>
 
         @else
 
@@ -58,9 +58,7 @@
         </span>
 
         @endif
-        @if ($esDestacado ?? false)
         </div>
-        @endif
 
     </div>
 

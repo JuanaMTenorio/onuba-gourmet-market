@@ -1,0 +1,564 @@
+/* *************************************************************
+   CARRITO fondo general
+   ************************************************************* */
+
+/* Fondo y color general de la página del carrito */
+.vista-carrito {
+    color: #203b1d;
+    background-color: #fff;
+}
+
+/* *************************************************************
+   BANNER imagen + título + texto
+   ************************************************************* */
+
+/* Presentación de la imagen de fondo y del título de la página */
+.carrito-banner {
+    padding: 24px 16px 30px;
+    text-align: center;
+    background-image: linear-gradient(90deg, rgba(247, 244, 237, 0.5), rgba(247, 244, 237, 0.97) 30%, rgba(247, 244, 237, 0.97) 70%, rgba(247, 244, 237, 0.5)), url('../imagen/portada/hero.webp');
+    background-size: cover;
+    background-position: center;
+    border-bottom: 1px solid #e5e5da;
+}
+
+.carrito-banner > i {
+    font-size: 36px;
+}
+
+.carrito-banner h1 {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    margin: 4px 0;
+    font-family: Georgia, serif;
+    font-size: clamp(1.75rem, 3.4vw, 3.25rem);
+    font-weight: bold;
+}
+
+.carrito-banner h1::before,
+.carrito-banner h1::after {
+    content: '';
+    width: 50px;
+    height: 2px;
+    background-color: #ad7a25;
+}
+
+.carrito-banner p {
+    margin: 0;
+    color: #292929;
+    font-family: Georgia, serif;
+    font-size: clamp(1rem, 1.5vw, 1.4rem);
+}
+
+/* *************************************************************
+   CONTENIDO distribución de productos y resumen
+   ************************************************************* */
+
+/* Espacio exterior y distribución del contenido del carrito */
+.carrito-contenedor {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 28px clamp(16px, 3vw, 48px) 48px;
+}
+
+.carrito-distribucion {
+    display: grid;
+    grid-template-columns: minmax(0, 2.3fr) minmax(280px, 1fr);
+    align-items: start;
+    gap: 24px;
+}
+
+/* *************************************************************
+   PRODUCTOS imagen + nombre + precio
+   ************************************************************* */
+
+/* Encabezados, imágenes, información y precios de los productos */
+.carrito-productos {
+    min-width: 0;
+    border: 1px solid #dedfd7;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.carrito-encabezados,
+.carrito-producto {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 94px 132px 108px 40px;
+    align-items: center;
+    gap: 12px;
+    padding: 18px 16px;
+}
+
+.carrito-encabezados {
+    background-color: var(--color-fondo-crema);
+    color: #20251c;
+    font-family: Georgia, serif;
+    font-weight: bold;
+}
+
+.carrito-encabezados span:not(:first-child) {
+    text-align: center;
+}
+
+.carrito-producto + .carrito-producto {
+    border-top: 1px solid #e4e4df;
+}
+
+.carrito-detalle {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    min-width: 0;
+}
+
+.carrito-detalle img {
+    width: 100px;
+    height: 84px;
+    flex-shrink: 0;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.carrito-detalle h2 {
+    margin: 0 0 6px;
+    color: #20251c;
+    font-family: Georgia, serif;
+    font-size: 1.05rem;
+    font-weight: bold;
+    line-height: 1.3;
+}
+
+.carrito-detalle p {
+    margin: 0;
+    color: #595959;
+    font-size: 0.875rem;
+}
+
+.carrito-precio,
+.carrito-subtotal {
+    margin: 0;
+    text-align: center;
+    font-family: Georgia, serif;
+    font-size: 1.1rem;
+    white-space: nowrap;
+}
+
+.carrito-subtotal {
+    color: #20251c;
+    font-weight: bold;
+}
+
+.carrito-etiqueta-subtotal {
+    display: none;
+}
+
+/* *************************************************************
+   CANTIDAD selector + actualizar + eliminar
+   ************************************************************* */
+
+/* Controles para cambiar las unidades o eliminar un producto */
+.carrito-selector {
+    display: flex;
+    justify-content: center;
+    border: 1px solid #d6d7d1;
+    border-radius: 10px;
+    overflow: hidden;
+    background-color: #fff;
+}
+
+.carrito-selector button,
+.carrito-selector input {
+    width: 40px;
+    min-height: 44px;
+    padding: 0;
+    border: 0;
+    background-color: transparent;
+    text-align: center;
+    color: #203b1d;
+    font-size: 1.15rem;
+}
+
+.carrito-selector input {
+    min-width: 0;
+    appearance: textfield;
+    -moz-appearance: textfield;
+}
+
+.carrito-selector input::-webkit-inner-spin-button,
+.carrito-selector input::-webkit-outer-spin-button {
+    appearance: none;
+    margin: 0;
+}
+
+.carrito-selector button:hover:not(:disabled) {
+    background-color: #eef0e5;
+}
+
+.carrito-selector button:disabled {
+    color: #93998c;
+}
+
+.carrito-actualizar {
+    display: block;
+    margin: 6px auto 0;
+    border: 0;
+    background: transparent;
+    color: #203b1d;
+    text-decoration: underline;
+}
+
+.carrito-actualizar[hidden] {
+    display: none;
+}
+
+.carrito-eliminar {
+    width: 40px;
+    min-height: 44px;
+    border: 0;
+    color: #294a24;
+    background-color: transparent;
+    border-radius: 6px;
+    font-size: 1.3rem;
+}
+
+.carrito-eliminar:hover {
+    background-color: #f5eee8;
+}
+
+/* *************************************************************
+   RESUMEN importes + pago + envío
+   ************************************************************* */
+
+/* Importes del pedido, botón de compra y mensaje de envío */
+.carrito-resumen {
+    grid-column: 2;
+    grid-row: 1 / 3;
+    padding: 24px;
+    border-radius: 10px;
+    background-color: var(--color-fondo-crema);
+}
+
+.carrito-resumen h2 {
+    margin-bottom: 20px;
+    font-family: Georgia, serif;
+    font-size: 1.65rem;
+    font-weight: bold;
+}
+
+.carrito-importes {
+    padding: 14px 12px 0;
+    border-radius: 10px;
+    background-color: rgba(255, 255, 255, 0.7);
+}
+
+.carrito-importes p {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 14px;
+    color: #252525;
+    font-size: 0.95rem;
+}
+
+.carrito-importes p span:last-child,
+.carrito-total strong {
+    flex-shrink: 0;
+}
+
+.carrito-importes .carrito-total {
+    margin: 0 -12px;
+    padding: 16px 12px;
+    border-radius: 8px;
+    background-color: #e6ead8;
+    color: #203b1d;
+    font-family: Georgia, serif;
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+.carrito-pagar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    min-height: 54px;
+    margin-top: 20px;
+    padding: 10px;
+    border: 1px solid #294a24;
+    border-radius: 9px;
+    font-family: Georgia, serif;
+    font-size: 1.15rem;
+    cursor: not-allowed;
+    background-color: #294a24;
+    color: #fff;
+}
+
+.carrito-aviso-pago {
+    margin: 10px 0 20px;
+    text-align: center;
+    font-size: 0.8125rem;
+    color: #626457;
+}
+
+.carrito-envio {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin: 0;
+    font-family: Georgia, serif;
+}
+
+.carrito-envio i {
+    font-size: 1.6rem;
+}
+
+/* *************************************************************
+   SEGUIR COMPRANDO botón
+   ************************************************************* */
+
+/* Enlace para volver al catálogo y su estado al pasar el ratón */
+.carrito-seguir {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    justify-self: start;
+    gap: 12px;
+    min-height: 46px;
+    padding: 10px 22px;
+    border: 1px solid #294a24;
+    border-radius: 8px;
+    color: #203b1d;
+    text-decoration: none;
+    font-family: Georgia, serif;
+    font-weight: bold;
+}
+
+.carrito-seguir:hover {
+    background-color: var(--color-fondo-crema);
+    color: #203b1d;
+}
+
+/* *************************************************************
+   CARRITO VACÍO mensaje
+   ************************************************************* */
+
+/* Presentación del mensaje cuando todavía no hay productos */
+.carrito-vacio {
+    padding: 48px 16px;
+    text-align: center;
+    background-color: var(--color-fondo-crema);
+    border-radius: 12px;
+}
+
+.carrito-vacio > i {
+    display: block;
+    margin-bottom: 12px;
+    font-size: 2.5rem;
+}
+
+.carrito-vacio h2 {
+    font-family: Georgia, serif;
+}
+
+/* *************************************************************
+   RESPONSIVE VERSIÓN PC MEDIANO
+   ************************************************************* */
+/* De 992 a 1199 píxeles de ancho */
+
+@media (min-width: 992px) and (max-width: 1199.98px) {
+    /* *************************************************************
+       CONTENIDO distribución de productos y resumen
+       ************************************************************* */
+
+    .carrito-distribucion {
+        grid-template-columns: minmax(0, 1fr) 280px;
+        gap: 16px;
+    }
+
+    /* *************************************************************
+       PRODUCTOS imagen + nombre + precio
+       ************************************************************* */
+
+    .carrito-encabezados,
+    .carrito-producto {
+        grid-template-columns: minmax(0, 1fr) 70px 112px 80px 32px;
+        gap: 8px;
+        padding: 16px 12px;
+    }
+
+    .carrito-detalle {
+        gap: 10px;
+    }
+
+    .carrito-detalle img {
+        width: 72px;
+        height: 72px;
+    }
+
+    /* *************************************************************
+       CANTIDAD selector + actualizar + eliminar
+       ************************************************************* */
+
+    .carrito-eliminar {
+        width: 32px;
+    }
+
+    /* *************************************************************
+       RESUMEN importes + pago + envío
+       ************************************************************* */
+
+    .carrito-resumen {
+        padding: 18px 14px;
+    }
+
+}
+
+/* *************************************************************
+   RESPONSIVE VERSIÓN MÓVIL
+   ************************************************************* */
+/* Hasta 767 píxeles de ancho */
+
+@media (max-width: 767.98px) {
+    /* *************************************************************
+       BANNER imagen + título + texto
+       ************************************************************* */
+
+    .carrito-banner {
+        padding: 18px 12px 22px;
+    }
+
+    .carrito-banner h1 {
+        gap: 10px;
+    }
+
+    .carrito-banner h1::before,
+    .carrito-banner h1::after {
+        width: 20px;
+        flex-shrink: 0;
+    }
+
+    /* *************************************************************
+       CONTENIDO distribución de productos y resumen
+       ************************************************************* */
+
+    .carrito-distribucion {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 16px;
+    }
+
+    .carrito-contenedor {
+        padding: 16px 12px 32px;
+    }
+
+    /* *************************************************************
+       PRODUCTOS imagen + nombre + precio
+       ************************************************************* */
+
+    .carrito-productos {
+        border: 0;
+        overflow: visible;
+    }
+
+    .carrito-encabezados {
+        display: none;
+    }
+
+    .carrito-producto {
+        grid-template-columns: minmax(0, 1fr) 112px 36px;
+        gap: 8px;
+        padding: 12px;
+        border: 1px solid #dedfd7;
+        border-radius: 10px;
+        margin-bottom: 10px;
+    }
+
+    .carrito-detalle {
+        grid-column: 1 / -1;
+        gap: 12px;
+    }
+
+    .carrito-detalle img {
+        width: 84px;
+    }
+
+    .carrito-precio {
+        grid-column: 1;
+        font-weight: bold;
+        font-size: 1rem;
+        text-align: left;
+    }
+
+    .carrito-subtotal {
+        grid-column: 1 / -1;
+        grid-row: 3;
+        text-align: right;
+        font-size: 0.875rem;
+    }
+
+    .carrito-etiqueta-subtotal {
+        display: inline;
+        color: #595959;
+        font-weight: normal;
+    }
+
+    /* *************************************************************
+       CANTIDAD selector + actualizar + eliminar
+       ************************************************************* */
+
+    .carrito-formulario-cantidad {
+        grid-column: 2;
+    }
+
+    .carrito-formulario-eliminar {
+        grid-column: 3;
+        grid-row: 2;
+    }
+
+    .carrito-eliminar {
+        width: 36px;
+    }
+
+    /* *************************************************************
+       RESUMEN importes + pago + envío
+       ************************************************************* */
+
+    .carrito-resumen {
+        grid-column: auto;
+        grid-row: auto;
+        padding: 20px 14px;
+    }
+
+    .carrito-resumen h2 {
+        font-size: 1.5rem;
+    }
+
+}
+
+/* *************************************************************
+   RESPONSIVE VERSIÓN TABLET
+   ************************************************************* */
+/* De 768 a 991 píxeles de ancho */
+
+@media (min-width: 768px) and (max-width: 991.98px) {
+    /* *************************************************************
+       CONTENIDO distribución de productos y resumen
+       ************************************************************* */
+
+    .carrito-distribucion {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    /* *************************************************************
+       RESUMEN importes + pago + envío
+       ************************************************************* */
+
+    .carrito-resumen {
+        grid-column: auto;
+        grid-row: auto;
+    }
+
+}
