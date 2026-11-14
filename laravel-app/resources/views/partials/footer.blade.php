@@ -22,8 +22,9 @@
             <h2>Mi cuenta</h2>
             <ul>
                 <li><a href="{{ route('carrito.index') }}">Mi carrito</a></li>
-                {{-- Estas opciones se convertirán en enlaces cuando existan sus páginas --}}
-                <li><span>Iniciar sesión</span></li>
+                @guest
+                    <li><a href="{{ route('login') }}">Iniciar sesión</a></li>
+                @endguest
                 <li><span>Mis pedidos</span></li>
             </ul>
         </div>

@@ -77,9 +77,13 @@
                     <a href="#" aria-label="Buscar">
                         <i class="bi bi-search" aria-hidden="true"></i>
                     </a>
-                    <a href="#" aria-label="Mi cuenta">
-                        <i class="bi bi-person" aria-hidden="true"></i>
-                    </a>
+                    @guest
+                        <a href="{{ route('login') }}" aria-label="Mi cuenta: iniciar sesión">
+                            <i class="bi bi-person" aria-hidden="true"></i>
+                        </a>
+                    @else
+                        <span><i class="bi bi-person" aria-hidden="true"></i> {{ auth()->user()->nombre }}</span>
+                    @endguest
                     <a href="{{ route('carrito.index') }}" aria-label="Carrito">
                         <i class="bi bi-bag" aria-hidden="true"></i>
                         <span class="contador-carrito">{{ array_sum(session('carrito', [])) }}</span>
