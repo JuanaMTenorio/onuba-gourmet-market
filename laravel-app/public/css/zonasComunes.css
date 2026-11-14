@@ -137,6 +137,7 @@ input:focus-visible {
 .logo-onuba {
     display: block;
     width: 240px;
+    max-width: 100%;
 }
 
 /* El menú se mantiene visible en ordenador aunque tenga la clase collapse */
@@ -165,7 +166,7 @@ input:focus-visible {
     text-underline-offset: 4px;
 }
 
-/* Agrupa los iconos de búsqueda, cuenta, carrito y menú */
+/* Agrupa la cuenta, el carrito y el botón del menú */
 .iconos-cabecera {
     grid-area: iconos;
     display: flex;
@@ -194,6 +195,29 @@ input:focus-visible {
 .iconos-cabecera a:hover,
 .btn-menu:hover {
     background-color: #f7f4ed;
+}
+
+/* Da más presencia a la cuenta y limita el ancho de los nombres largos */
+.cuenta-cabecera {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px;
+    color: #2f472c;
+    font-size: clamp(1.0625rem, 1.5vw, 1.1875rem);
+    font-weight: 600;
+}
+
+.icono-cuenta {
+    font-size: clamp(1.5rem, 2.1vw, 1.75rem);
+    line-height: 1;
+}
+
+.nombre-cuenta {
+    max-width: min(20vw, 16ch);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 /* Muestra el número de unidades sobre el icono del carrito */

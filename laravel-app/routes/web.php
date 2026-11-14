@@ -19,7 +19,10 @@ Route::get('/categoria/{slug}', [InicioController::class, 'categoria']);
 Route::get('/carrito', [CarritoController::class, 'index'])->name('carrito.index');
 Route::post('/carrito/{producto}', [CarritoController::class, 'agregar'])->name('carrito.agregar');
 Route::patch('/carrito/{producto}', [CarritoController::class, 'actualizar'])->name('carrito.actualizar');
-Route::delete('/carrito/{identificador}', [CarritoController::class, 'eliminar'])->name('carrito.eliminar');
+Route::delete('/carrito/{identificador}', [CarritoController::class, 'eliminar'])
+    ->whereNumber('identificador')->name('carrito.eliminar');
+
+Route::post('/salir', [AutenticacionController::class, 'salir'])->middleware('auth')->name('logout');
 
 Route::middleware('guest')->group(function (): void {
     Route::view('/registro', 'auth.registro')->name('registro');

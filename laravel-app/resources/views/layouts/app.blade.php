@@ -74,19 +74,28 @@
 
                 <!-- ICONOS -->
                 <div class="iconos-cabecera">
-                    <a href="#" aria-label="Buscar">
-                        <i class="bi bi-search" aria-hidden="true"></i>
-                    </a>
                     @guest
                         <a href="{{ route('login') }}" aria-label="Mi cuenta: iniciar sesión">
-                            <i class="bi bi-person" aria-hidden="true"></i>
+                            <i class="bi bi-person icono-cuenta" aria-hidden="true"></i>
                         </a>
                     @else
-                        <span><i class="bi bi-person" aria-hidden="true"></i> {{ auth()->user()->nombre }}</span>
+                        <div class="dropdown">
+                            <button id="menu-cuenta" type="button" class="btn cuenta-cabecera dropdown-toggle"
+                                data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-person icono-cuenta" aria-hidden="true"></i>
+                                <span class="nombre-cuenta" title="{{ auth()->user()->nombre }}">{{ auth()->user()->nombre }}</span>
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-end" aria-labelledby="menu-cuenta">
+                                <form method="POST" action="{{ route('logout') }}">
+                                    @csrf
+                                    <button type="submit" class="dropdown-item">Cerrar sesión</button>
+                                </form>
+                            </div>
+                        </div>
                     @endguest
                     <a href="{{ route('carrito.index') }}" aria-label="Carrito">
                         <i class="bi bi-bag" aria-hidden="true"></i>
-                        <span class="contador-carrito">{{ array_sum(session('carrito', [])) }}</span>
+                        <span class="contador-carrito">{{ array_sum(app(\App\Services\Carrito::class)->leer(request())) }}</span>
                     </a>
                     <button
                         type="button"

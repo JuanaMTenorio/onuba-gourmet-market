@@ -3,15 +3,26 @@
 namespace App\Http\Controllers;
 
 use App\Models\Producto;
+use App\Services\Carrito;
 use Illuminate\Http\Request;
 
-// La sesión guarda el identificador y la cantidad de cada producto
 // Los precios y la disponibilidad se consultan siempre en la base de datos
 class CarritoController extends Controller
 {
+    public function __construct(private Carrito $carrito)
+    {
+    }
+
     public function index(Request $request)
     {
-        $carrito = $request->session()->get('carrito', []);
+        $this->carrito->incorporarVisitante($request);
+
+        return $this->carrito->modificar($request, fn () => $this->mostrarCarrito($request));
+    }
+
+    private function mostrarCarrito(Request $request)
+    {
+        $carrito = $this->carrito->leer($request);
         $lineas = [];
         $totalCentimos = 0;
 
@@ -25,14 +36,14 @@ class CarritoController extends Controller
 
             // Retira los productos que ya no se pueden comprar
             if ($producto === null || $producto->stock < 1) {
-                unset($carrito[$identificador]);
+                $this->carrito->guardarCantidad($request, $identificador, 0);
                 $request->session()->flash('aviso', 'El carrito se ha ajustado a la disponibilidad actual');
                 continue;
             }
 
             if ($cantidad > $producto->stock) {
                 $cantidad = $producto->stock;
-                $carrito[$identificador] = $cantidad;
+                $this->carrito->guardarCantidad($request, $identificador, $cantidad);
                 $request->session()->flash('aviso', 'El carrito se ha ajustado a la disponibilidad actual');
             }
 
@@ -48,7 +59,6 @@ class CarritoController extends Controller
             ];
         }
 
-        $request->session()->put('carrito', $carrito);
         $total = $totalCentimos / 100;
 
         return view('carrito', compact('lineas', 'total'));
@@ -61,21 +71,20 @@ class CarritoController extends Controller
             return back()->with('aviso', 'Este producto ya no está disponible');
         }
 
-        $carrito = $request->session()->get('carrito', []);
-        $cantidad = 1;
+        $this->carrito->incorporarVisitante($request);
 
-        if (isset($carrito[$producto->id])) {
-            $cantidad = $carrito[$producto->id] + 1;
-        }
+        return $this->carrito->modificar($request, function () use ($request, $producto) {
+            $carrito = $this->carrito->leer($request);
+            $cantidad = ($carrito[$producto->id] ?? 0) + 1;
 
-        if ($cantidad > $producto->stock) {
-            return back()->with('aviso', 'No hay más unidades disponibles de este producto');
-        }
+            if ($cantidad > $producto->stock) {
+                return back()->with('aviso', 'No hay más unidades disponibles de este producto');
+            }
 
-        $carrito[$producto->id] = $cantidad;
-        $request->session()->put('carrito', $carrito);
+            $this->carrito->guardarCantidad($request, $producto->id, $cantidad);
 
-        return back();
+            return back();
+        });
     }
 
     // Comprueba la cantidad enviada por el formulario antes de guardarla
@@ -94,12 +103,13 @@ class CarritoController extends Controller
             'cantidad.max' => 'La cantidad supera el stock disponible',
         ]);
 
-        $carrito = $request->session()->get('carrito', []);
-
-        if (isset($carrito[$producto->id])) {
-            $carrito[$producto->id] = (int) $datos['cantidad'];
-            $request->session()->put('carrito', $carrito);
-        }
+        $this->carrito->incorporarVisitante($request);
+        $this->carrito->modificar($request, function () use ($request, $producto, $datos): void {
+            $carrito = $this->carrito->leer($request);
+            if (isset($carrito[$producto->id])) {
+                $this->carrito->guardarCantidad($request, $producto->id, (int) $datos['cantidad']);
+            }
+        });
 
         return redirect()->route('carrito.index');
     }
@@ -107,9 +117,10 @@ class CarritoController extends Controller
     // No necesita consultar el producto para poder retirar también uno eliminado
     public function eliminar(Request $request, $identificador)
     {
-        $carrito = $request->session()->get('carrito', []);
-        unset($carrito[$identificador]);
-        $request->session()->put('carrito', $carrito);
+        $this->carrito->incorporarVisitante($request);
+        $this->carrito->modificar($request, function () use ($request, $identificador): void {
+            $this->carrito->guardarCantidad($request, (int) $identificador, 0);
+        });
 
         return redirect()->route('carrito.index')->with('mensaje', 'Producto eliminado del carrito');
     }

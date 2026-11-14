@@ -3,13 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\Usuario;
+use App\Services\Carrito;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class AutenticacionController extends Controller
 {
-    public function registrar(Request $request): RedirectResponse
+    public function registrar(Request $request, Carrito $carrito): RedirectResponse
     {
         $datos = $request->validate([
             'nombre' => ['required', 'string', 'max:100'],
@@ -44,12 +45,13 @@ class AutenticacionController extends Controller
         // El modelo guarda el hash y la tabla asigna el rol de cliente.
         $usuario = Usuario::create($datos);
         Auth::login($usuario);
+        $carrito->incorporarVisitante($request);
         $request->session()->regenerate();
 
         return redirect()->intended('/');
     }
 
-    public function entrar(Request $request): RedirectResponse
+    public function entrar(Request $request, Carrito $carrito): RedirectResponse
     {
         $credenciales = $request->validate([
             'email' => ['required', 'email', 'max:255'],
@@ -70,9 +72,19 @@ class AutenticacionController extends Controller
             ])->onlyInput('email');
         }
 
-        // Cambia el identificador de sesión y conserva los datos del carrito.
+        $carrito->incorporarVisitante($request);
         $request->session()->regenerate();
 
         return redirect()->intended('/');
+    }
+
+    public function salir(Request $request, Carrito $carrito): RedirectResponse
+    {
+        $carrito->incorporarVisitante($request);
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect('/');
     }
 }

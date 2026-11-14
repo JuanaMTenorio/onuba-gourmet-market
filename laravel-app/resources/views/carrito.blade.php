@@ -79,7 +79,7 @@
             <aside class="carrito-resumen" aria-labelledby="titulo-resumen">
                 <h2 id="titulo-resumen">Resumen del pedido</h2>
                 <div class="carrito-importes">
-                    <p><span>Subtotal ({{ array_sum(session('carrito', [])) }} unidades)</span><span>{{ number_format($total, 2, ',', '.') }} €</span></p>
+                    <p><span>Subtotal ({{ array_sum(array_column($lineas, 'cantidad')) }} unidades)</span><span>{{ number_format($total, 2, ',', '.') }} €</span></p>
                     <p><span>Gastos de envío</span><span>Por calcular</span></p>
                     <p class="carrito-total"><span>Total de productos</span><strong>{{ number_format($total, 2, ',', '.') }} €</strong></p>
                 </div>
