@@ -64,6 +64,7 @@ return [
     'providers' => [
         'users' => [
             'driver' => 'eloquent',
+            // El modelo Usuario conecta el inicio de sesión con la tabla usuarios
             'model' => env('AUTH_MODEL', Usuario::class),
         ],
 

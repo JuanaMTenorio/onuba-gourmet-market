@@ -10,13 +10,14 @@ use Illuminate\Support\Facades\Auth;
 
 class AutenticacionController extends Controller
 {
+    // Método: Validar los datos del registro, crear la cuenta y abrir la sesión
     public function registrar(Request $request, Carrito $carrito): RedirectResponse
     {
         $datos = $request->validate([
             'nombre' => ['required', 'string', 'max:100'],
             'apellidos' => ['required', 'string', 'max:150'],
             'email' => ['required', 'email', 'max:255', 'unique:usuarios,email'],
-            'telefono' => ['nullable', 'string', 'max:20'],
+            'telefono' => ['required', 'string', 'max:20'],
             'direccion' => ['required', 'string', 'max:255'],
             'codigo_postal' => ['required', 'string', 'max:10'],
             'localidad' => ['required', 'string', 'max:100'],
@@ -51,6 +52,7 @@ class AutenticacionController extends Controller
         return redirect()->intended('/');
     }
 
+    // Método: Comprobar el correo y la contraseña para iniciar sesión
     public function entrar(Request $request, Carrito $carrito): RedirectResponse
     {
         $credenciales = $request->validate([
@@ -66,6 +68,7 @@ class AutenticacionController extends Controller
             'password' => 'contraseña',
         ]);
 
+        // Laravel busca el correo del cliente en la tabla usuarios de la bd y comprueba su contraseña
         if (! Auth::attempt($credenciales)) {
             return back()->withErrors([
                 'email' => 'El correo electrónico o la contraseña no son correctos.',
@@ -78,6 +81,7 @@ class AutenticacionController extends Controller
         return redirect()->intended('/');
     }
 
+    // Método: Cerrar la sesión del navegador y conservar el carrito en MySQL
     public function salir(Request $request, Carrito $carrito): RedirectResponse
     {
         $carrito->incorporarVisitante($request);

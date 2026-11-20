@@ -22,6 +22,7 @@
             <h2>Mi cuenta</h2>
             <ul>
                 <li><a href="{{ route('carrito.index') }}">Mi carrito</a></li>
+                {{-- Muestro el enlace de acceso solo a los visitantes --}}
                 @guest
                     <li><a href="{{ route('login') }}">Iniciar sesión</a></li>
                 @endguest

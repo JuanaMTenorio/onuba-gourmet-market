@@ -74,6 +74,7 @@
 
                 <!-- ICONOS -->
                 <div class="iconos-cabecera">
+                    {{-- Si el cliente ha entrado, muestro su nombre y el menú para cerrar sesión --}}
                     @guest
                         <a href="{{ route('login') }}" aria-label="Mi cuenta: iniciar sesión">
                             <i class="bi bi-person icono-cuenta" aria-hidden="true"></i>

@@ -19,7 +19,8 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     // Aquí se pueden configurar los middleware, que realizan tareas antes o después de atender una petición
     ->withMiddleware(function (Middleware $middleware): void {
-        // Actualmente no se añaden ajustes propios en este bloque
+        // Stripe envía el aviso desde fuera de Onuba y el controlador comprueba su firma
+        $middleware->preventRequestForgery(except: ['stripe/webhook']);
     })
     // Aquí se configura cómo se presentan los errores de la aplicación
     ->withExceptions(function (Exceptions $exceptions): void {

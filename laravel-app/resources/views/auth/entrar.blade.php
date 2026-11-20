@@ -8,6 +8,7 @@
             <div class="col-12 col-sm-9 col-md-6 col-lg-5">
                 <h1 class="h2 mb-4">Iniciar sesión</h1>
 
+                {{-- Envío el correo y la contraseña para abrir la sesión del cliente --}}
                 <form action="{{ route('login') }}" method="POST">
                     @csrf
 

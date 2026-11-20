@@ -35,4 +35,13 @@ return [
         ],
     ],
 
+    'stripe' => [
+        // Laravel usa la clave secreta para pedir a Stripe una sesión de pago
+        'secret' => env('STRIPE_SECRET'),
+        // Stripe.js usa la clave publicable para mostrar el formulario
+        'publicable' => env('STRIPE_PUBLISHABLE_KEY'),
+        // Laravel usa este secreto para comprobar la firma de los avisos de Stripe
+        'webhook_secret' => env('STRIPE_WEBHOOK_SECRET'),
+    ],
+
 ];

@@ -8,6 +8,7 @@
             <div class="col-12 col-sm-9 col-md-6 col-lg-5">
                 <h1 class="h2 mb-4">Crear cuenta</h1>
 
+                {{-- El formulario envía los datos de la nueva cuenta al controlador de registro --}}
                 <form action="{{ route('registro') }}" method="POST">
                     @csrf
 
@@ -44,9 +45,9 @@
                     </div>
 
                     <div class="mb-3">
-                        <label for="telefono" class="form-label">Teléfono (opcional)</label>
+                        <label for="telefono" class="form-label">Teléfono</label>
                         <input id="telefono" name="telefono" type="tel" class="form-control"
-                            autocomplete="tel" maxlength="20" value="{{ old('telefono') }}">
+                            autocomplete="tel" maxlength="20" value="{{ old('telefono') }}" required>
                     </div>
 
                     <fieldset class="mb-4">

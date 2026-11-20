@@ -63,6 +63,7 @@
     padding: 28px clamp(16px, 3vw, 48px) 48px;
 }
 
+/* Coloca los productos a la izquierda y el resumen a la derecha en ordenador */
 .carrito-distribucion {
     display: grid;
     grid-template-columns: minmax(0, 2.3fr) minmax(280px, 1fr);
@@ -233,8 +234,6 @@
 
 /* Importes del pedido, botón de compra y mensaje de envío */
 .carrito-resumen {
-    grid-column: 2;
-    grid-row: 1 / 3;
     padding: 24px;
     border-radius: 10px;
     background-color: var(--color-fondo-crema);
@@ -286,21 +285,48 @@
     width: 100%;
     min-height: 54px;
     margin-top: 20px;
+    margin-bottom: 16px;
     padding: 10px;
     border: 1px solid #294a24;
     border-radius: 9px;
     font-family: Georgia, serif;
     font-size: 1.15rem;
-    cursor: not-allowed;
     background-color: #294a24;
+    color: #fff;
+    text-decoration: none;
+}
+
+.carrito-pagar:hover {
+    background-color: #203c1c;
     color: #fff;
 }
 
-.carrito-aviso-pago {
-    margin: 10px 0 20px;
-    text-align: center;
-    font-size: 0.8125rem;
-    color: #626457;
+/* Agrupa los productos, la dirección de envío y el formulario de pago */
+.carrito-columna-productos {
+    display: grid;
+    gap: 24px;
+    min-width: 0;
+}
+
+/* Coloca las acciones al final del carrito, debajo de las dos columnas */
+.carrito-acciones,
+.carrito-aviso-stripe {
+    grid-column: 1 / -1;
+}
+
+.carrito-acciones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.carrito-acciones [hidden] {
+    display: none;
+}
+
+#boton-pago {
+    background-color: #294a24;
+    color: #fff;
 }
 
 .carrito-envio {
@@ -550,15 +576,6 @@
 
     .carrito-distribucion {
         grid-template-columns: minmax(0, 1fr);
-    }
-
-    /* *************************************************************
-       RESUMEN importes + pago + envío
-       ************************************************************* */
-
-    .carrito-resumen {
-        grid-column: auto;
-        grid-row: auto;
     }
 
 }
