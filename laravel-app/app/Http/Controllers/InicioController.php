@@ -1,70 +1,83 @@
 <?php
-// Controlador que prepara los datos (pide a MySQL las categorías y las entrega a la vista)
-
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Categoria;
 use App\Models\Producto;
+use Illuminate\Http\Request;
 
-// Clase que hereda del controlador base (Controller) de Laravel
 class InicioController extends Controller
 {
-    // Creo el método, que al ejecutarse:
-    public function index()
-    {
-        // Obtiene las categorías utilizando el modelo Categoria
+    // Preparo las categorías y los productos destacados para la página de inicio
+    public function index() {
         $categorias = Categoria::all();
 
-        // Muestra hasta seis productos destacados y activos de categorías activas
-        // whereHas comprueba la categoría relacionada con cada producto
-        $destacados = Producto::where('destacado', true)
-            ->where('activo', true)
-            ->whereHas('categoria', function ($consultaCategoria) {
-                $consultaCategoria->where('activa', true);
-            })
-            ->orderBy('categoria_id')
-            ->orderBy('id')
-            ->limit(6)
-            ->get();
+        // Busco hasta seis productos destacados que estén activos y tengan una categoría activa
+        $sqlProductosDestacados = '
+            SELECT producto.*
+            FROM productos AS producto
+            INNER JOIN categorias AS categoria ON categoria.id = producto.categoria_id
+            WHERE producto.destacado = ?
+              AND producto.activo = ?
+              AND categoria.activa = ?
+            ORDER BY producto.categoria_id, producto.id
+            LIMIT 6
+        ';
 
-        return view('inicio', compact('categorias', 'destacados'));
+        $parametrosProductosDestacados = [
+            true,
+            true,
+            true,
+        ];
+
+        // fromQuery ejecuta el SQL y devuelve el resultado como modelos Producto
+        $consultaProductosDestacados = Producto::query();
+        $productosDestacados = $consultaProductosDestacados->fromQuery(
+            $sqlProductosDestacados,
+            $parametrosProductosDestacados,
+        );
+
+        $datosInicio = [
+            'categorias' => $categorias,
+            'destacados' => $productosDestacados,
+        ];
+
+        return view('inicio', $datosInicio);
     }
 
-    // Creo el método que:
-    public function categoria(Request $request, $slug)
-    {
-        // 1. Buscar la categoría seleccionada por su slug
-        $categoria = Categoria::where('slug', $slug)
-            ->where('activa', 1)
-            ->firstOrFail();
+    // Recibo el slug de la URL y preparo la página de esa categoría
+    public function categoria(Request $peticion, $slug) {
+        // Busco la categoría activa y devuelvo un error 404 si no existe
+        $consultaCategoria = Categoria::query();
+        $consultaCategoria->where('slug', $slug);
+        $consultaCategoria->where('activa', true);
+        $categoria = $consultaCategoria->firstOrFail();
 
-        // 2. Obtener las categorías activas para el menú lateral
-        $categorias = Categoria::where('activa', true)
-            ->get();
+        // Recupero las categorías activas que aparecen en el menú
+        $consultaCategoriasMenu = Categoria::query();
+        $consultaCategoriasMenu->where('activa', true);
+        $categorias = $consultaCategoriasMenu->get();
 
-        // Solo permite ordenar por las opciones definidas en el catálogo
-        $columna = 'nombre';
-        $direccion = 'asc';
+        // Leo la opción elegida en el formulario y uso solo las columnas permitidas
+        $ordenSeleccionado = $peticion->query('orden', 'nombre');
+        $columnaOrden = 'nombre';
+        $direccionOrden = 'asc';
 
-        if ($request->query('orden') === 'precio_asc') {
-            $columna = 'precio';
-            $direccion = 'asc';
-        } elseif ($request->query('orden') === 'precio_desc') {
-            $columna = 'precio';
-            $direccion = 'desc';
+        if ($ordenSeleccionado === 'precio_asc') {
+            $columnaOrden = 'precio';
+        } elseif ($ordenSeleccionado === 'precio_desc') {
+            $columnaOrden = 'precio';
+            $direccionOrden = 'desc';
         }
 
-        // 3. Consultar los productos de la categoría seleccionada
-        // Utiliza la relación productos definida en el modelo Categoria
-        $productos = $categoria->productos()
-            ->where('activo', 1)
-            ->orderBy($columna, $direccion)
-            ->orderBy('id', 'asc')
-            ->paginate(8);
+        // Parto de los productos de esta categoría y recupero ocho por página
+        $consultaProductos = $categoria->productos();
+        $consultaProductos->where('activo', true);
+        $consultaProductos->orderBy($columnaOrden, $direccionOrden);
+        $consultaProductos->orderBy('id', 'asc');
+        $productos = $consultaProductos->paginate(8);
 
-        // Banner propio de cada categoría, sin modificar la base de datos
-        $banners = [
+        // Cada slug tiene asociado el nombre de su imagen de cabecera
+        $nombresImagenesCabecera = [
             'aceites-de-oliva' => 'banner_aceites',
             'conservas-y-salazones' => 'banner_conservas_salazones',
             'jamones-y-embutidos' => 'banner_jamones_embutidos',
@@ -74,20 +87,33 @@ class InicioController extends Controller
         ];
 
         $bannerCategoria = null;
-        if (isset($banners[$categoria->slug])) {
-            // Prioriza WebP y permite incorporar los PNG originales directamente
-            foreach (['webp', 'png'] as $extension) {
-                $ruta = 'imagen/banners/' . $banners[$categoria->slug] . '.' . $extension;
-                if (is_file(public_path($ruta))) {
-                    $bannerCategoria = $ruta;
+        $slugCategoria = $categoria->slug;
+
+        if (isset($nombresImagenesCabecera[$slugCategoria])) {
+            $nombreImagenCabecera = $nombresImagenesCabecera[$slugCategoria];
+            $extensionesImagen = ['webp', 'png'];
+
+            // Compruebo si existe primero la imagen WebP y después la PNG
+            foreach ($extensionesImagen as $extensionImagen) {
+                $rutaImagenCabecera = "imagen/banners/{$nombreImagenCabecera}.{$extensionImagen}";
+                $rutaPublicaImagen = public_path($rutaImagenCabecera);
+
+                if (is_file($rutaPublicaImagen)) {
+                    $bannerCategoria = $rutaImagenCabecera;
                     break;
                 }
             }
         }
 
-        // 4. Enviar los datos a la vista
-        return view('categoria', compact('categoria', 'categorias', 'productos', 'bannerCategoria'));
+        // Las claves de este array son los nombres que uso en la vista Blade
+        $datosCategoria = [
+            'categoria' => $categoria,
+            'categorias' => $categorias,
+            'productos' => $productos,
+            'bannerCategoria' => $bannerCategoria,
+            'ordenSeleccionado' => $ordenSeleccionado,
+        ];
+
+        return view('categoria', $datosCategoria);
     }
-
-
 }

@@ -6,18 +6,26 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    // Añado la columna cuando se ejecuta la migración
     public function up(): void
     {
-        Schema::table('productos', function (Blueprint $table) {
-            // 0 = No; 1 = Sí. Los productos nuevos no destacan por defecto.
-            $table->boolean('destacado')->default(false);
-        });
+        $agregarColumnaDestacado = function (Blueprint $tablaProductos): void {
+            $columnaDestacado = $tablaProductos->boolean('destacado');
+
+            // Los productos empiezan sin destacar si al guardarlos no indico otro valor
+            $columnaDestacado->default(false);
+        };
+
+        Schema::table('productos', $agregarColumnaDestacado);
     }
 
+    // Retiro la columna cuando se deshace la migración
     public function down(): void
     {
-        Schema::table('productos', function (Blueprint $table) {
-            $table->dropColumn('destacado');
-        });
+        $quitarColumnaDestacado = function (Blueprint $tablaProductos): void {
+            $tablaProductos->dropColumn('destacado');
+        };
+
+        Schema::table('productos', $quitarColumnaDestacado);
     }
 };

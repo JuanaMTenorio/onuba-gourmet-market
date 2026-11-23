@@ -1,7 +1,7 @@
 <?php
 
-use App\Providers\AppServiceProvider;
+// Indico por su nombre completo el proveedor que Laravel carga al arrancar
 
 return [
-    AppServiceProvider::class,
+    'App\Providers\AppServiceProvider',
 ];

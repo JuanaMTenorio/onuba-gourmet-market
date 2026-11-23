@@ -1,12 +1,12 @@
 # Uso una imagen que ya incluye PHP 8.3 y el servidor web Apache.
 FROM php:8.3-apache
 
-# Actualizo la lista de paquetes e instalo herramientas para trabajar con archivos ZIP.
-# Añado a PHP las extensiones para conectarse a MySQL y manejar archivos ZIP.
+# Instalo las bibliotecas de internacionalización y las herramientas para archivos ZIP.
+# intl es un requisito de Filament. pdo_mysql y zip sirven para MySQL y los archivos ZIP.
 # Al terminar, borro la lista descargada para que la imagen ocupe menos espacio.
 RUN apt-get update \
-    && apt-get install -y libzip-dev unzip \
-    && docker-php-ext-install pdo_mysql zip \
+    && apt-get install -y libicu-dev libzip-dev unzip \
+    && docker-php-ext-install intl pdo_mysql zip \
     && rm -rf /var/lib/apt/lists/*
 
 # Copio Composer desde su imagen oficial para poder instalar las dependencias de Laravel.

@@ -3,13 +3,18 @@
 @section('titulo', 'Crear cuenta | Onuba Gourmet Market')
 
 @section('contenido')
+    @php
+        $direccionRegistro = route('registro');
+        $direccionInicioSesion = route('login');
+    @endphp
+
     <div class="container py-5">
         <div class="row justify-content-center">
             <div class="col-12 col-sm-9 col-md-6 col-lg-5">
                 <h1 class="h2 mb-4">Crear cuenta</h1>
 
                 {{-- El formulario envía los datos de la nueva cuenta al controlador de registro --}}
-                <form action="{{ route('registro') }}" method="POST">
+                <form action="{{ $direccionRegistro }}" method="POST">
                     @csrf
 
                     <div class="mb-3">
@@ -30,18 +35,32 @@
                             autocomplete="username" maxlength="255" value="{{ old('email') }}" required>
                     </div>
 
+                    {{-- Mantengo los campos de contraseña vacíos si el formulario vuelve con errores --}}
                     <div class="mb-3">
                         <label for="password" class="form-label">Contraseña</label>
-                        <input id="password" name="password" type="password" class="form-control"
-                            autocomplete="new-password" minlength="8" aria-describedby="ayuda-password aviso-password" required>
+                        <input
+                            id="password"
+                            name="password"
+                            type="password"
+                            class="form-control"
+                            autocomplete="new-password"
+                            minlength="8"
+                            aria-describedby="ayuda-password aviso-password"
+                            required>
                         <div id="ayuda-password" class="form-text">Usa al menos 8 caracteres.</div>
                         <div id="aviso-password" class="invalid-feedback d-block" aria-live="polite"></div>
                     </div>
 
                     <div class="mb-3">
                         <label for="password_confirmation" class="form-label">Confirmar contraseña</label>
-                        <input id="password_confirmation" name="password_confirmation" type="password" class="form-control"
-                            autocomplete="new-password" minlength="8" required>
+                        <input
+                            id="password_confirmation"
+                            name="password_confirmation"
+                            type="password"
+                            class="form-control"
+                            autocomplete="new-password"
+                            minlength="8"
+                            required>
                     </div>
 
                     <div class="mb-3">
@@ -82,7 +101,7 @@
                 </form>
 
                 <p class="mt-3">¿Ya tienes una cuenta?
-                    <a href="{{ route('login') }}">Inicia sesión</a>
+                    <a href="{{ $direccionInicioSesion }}">Inicia sesión</a>
                 </p>
             </div>
         </div>
@@ -91,21 +110,33 @@
 
 @push('scripts')
     <script>
-        const campoPassword = document.getElementById('password');
-        const avisoPassword = document.getElementById('aviso-password');
+        const campoContrasena = document.getElementById('password');
+        const avisoContrasena = document.getElementById('aviso-password');
 
-        // Muestra el aviso mientras la contraseña tiene menos caracteres de los requeridos.
-        campoPassword.addEventListener('input', () => {
-            const longitud = Array.from(campoPassword.value).length;
-            const demasiadoCorta = longitud > 0 && longitud < campoPassword.minLength;
-            const mensaje = demasiadoCorta ? 'La contraseña debe tener al menos 8 caracteres.' : '';
+        // Muestro un aviso al escribir una contraseña más corta de lo permitido
+        function revisarLongitudContrasena() {
+            const contrasenaEscrita = campoContrasena.value;
+            const caracteresContrasena = Array.from(contrasenaEscrita);
+            const cantidadCaracteres = caracteresContrasena.length;
 
-            campoPassword.classList.toggle('is-invalid', demasiadoCorta);
-            campoPassword.setAttribute('aria-invalid', String(demasiadoCorta));
+            const longitudMinima = campoContrasena.minLength;
+            const hayCaracteres = cantidadCaracteres > 0;
+            const contrasenaDemasiadoCorta = hayCaracteres && cantidadCaracteres < longitudMinima;
 
-            if (avisoPassword.textContent !== mensaje) {
-                avisoPassword.textContent = mensaje;
+            let mensajeAviso = '';
+            if (contrasenaDemasiadoCorta) {
+                mensajeAviso = 'La contraseña debe tener al menos 8 caracteres.';
             }
-        });
+
+            campoContrasena.classList.toggle('is-invalid', contrasenaDemasiadoCorta);
+            const valorAccesible = String(contrasenaDemasiadoCorta);
+            campoContrasena.setAttribute('aria-invalid', valorAccesible);
+
+            if (avisoContrasena.textContent !== mensajeAviso) {
+                avisoContrasena.textContent = mensajeAviso;
+            }
+        }
+
+        campoContrasena.addEventListener('input', revisarLongitudContrasena);
     </script>
 @endpush

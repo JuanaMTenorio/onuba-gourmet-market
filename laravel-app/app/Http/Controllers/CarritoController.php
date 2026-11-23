@@ -18,45 +18,63 @@ class CarritoController extends Controller
         $this->carrito = $carrito;
     }
 
-    // Método: Incorporar el carrito del visitante y mostrar los productos
-    public function index(Request $request)
+    // Incorporo los productos del visitante y preparo la página del carrito
+    public function index(Request $peticion)
     {
-        $this->carrito->incorporarVisitante($request);
+        $this->carrito->incorporarVisitante($peticion);
 
-        return $this->carrito->modificar($request, function () use ($request) {
-            return $this->mostrarCarrito($request);
-        });
+        // Con use llevo la petición dentro de la función que va a ejecutar el servicio
+        $operacionMostrarCarrito = function () use ($peticion) {
+            return $this->mostrarCarrito($peticion);
+        };
+
+        return $this->carrito->modificar($peticion, $operacionMostrarCarrito);
     }
 
     // Método: Preparar los productos, el total y la dirección para la vista del carrito
-    private function mostrarCarrito(Request $request)
+    private function mostrarCarrito(Request $peticion)
     {
-        $carrito = $this->carrito->leer($request);
+        $cantidadesCarrito = $this->carrito->leer($peticion);
         $lineas = [];
         $totalCentimos = 0;
-        $pedido = $this->carrito->pedidoPendiente($request);
+
+        $pedido = $this->carrito->pedidoPendiente($peticion);
         $pagoAbierto = $this->carrito->hayPagoAbierto($pedido);
 
         // Elijo si mostrar las líneas guardadas del pedido o el carrito que aún se puede editar
         if ($pagoAbierto) {
-            $consultaDetalles = DB::table('detalles_pedido');
-            $consultaDetalles->where('pedido_id', $pedido->id);
-            // Recupero de la bd las líneas de este pedido guardadas en detalles_pedido
-            $detalles = $consultaDetalles->get();
+            $identificadorPedido = $pedido->id;
+            $sqlDetallesPedido = '
+                SELECT producto_id, cantidad, precio_unitario, subtotal
+                FROM detalles_pedido
+                WHERE pedido_id = ?
+            ';
+
+            $parametrosDetallesPedido = [
+                $identificadorPedido,
+            ];
+
+            $detalles = DB::select($sqlDetallesPedido, $parametrosDetallesPedido);
+
             foreach ($detalles as $detalle) {
-                // Recupero de la bd el nombre y los demás datos guardados en la tabla productos
-                $producto = Producto::findOrFail($detalle->producto_id);
+                // Uso los datos del catálogo con el precio que se guardó al abrir el pago
+                $identificadorProducto = $detalle->producto_id;
+                $producto = Producto::findOrFail($identificadorProducto);
                 $producto->precio = $detalle->precio_unitario;
+
                 $lineas[] = [
                     'producto' => $producto,
                     'cantidad' => $detalle->cantidad,
                     'subtotal' => $detalle->subtotal,
                 ];
             }
-            $totalCentimos = (int) str_replace('.', '', $pedido->total);
+
+            $totalSinPuntoDecimal = str_replace('.', '', $pedido->total);
+            $totalCentimos = (int) $totalSinPuntoDecimal;
         } else {
-            foreach ($carrito as $identificador => $cantidad) {
-                $consultaProducto = Producto::where('id', $identificador);
+            foreach ($cantidadesCarrito as $identificadorProducto => $cantidad) {
+                $consultaProducto = Producto::query();
+                $consultaProducto->where('id', $identificadorProducto);
                 $consultaProducto->where('activo', true);
                 $consultaProducto->whereHas('categoria', function ($consultaCategoria) {
                     $consultaCategoria->where('activa', true);
@@ -66,43 +84,58 @@ class CarritoController extends Controller
 
                 // Retira los productos que ya no se pueden comprar
                 if ($producto === null || $producto->stock < 1) {
-                    $this->carrito->guardarCantidad($request, $identificador, 0);
-                    $sesion = $request->session();
+                    $this->carrito->guardarCantidad($peticion, $identificadorProducto, 0);
+                    $sesion = $peticion->session();
                     $sesion->flash('aviso', 'El carrito se ha ajustado a la disponibilidad actual');
                     continue;
                 }
 
                 if ($cantidad > $producto->stock) {
                     $cantidad = $producto->stock;
-                    $this->carrito->guardarCantidad($request, $identificador, $cantidad);
-                    $sesion = $request->session();
+                    $this->carrito->guardarCantidad($peticion, $identificadorProducto, $cantidad);
+                    $sesion = $peticion->session();
                     $sesion->flash('aviso', 'El carrito se ha ajustado a la disponibilidad actual');
                 }
 
                 // Calcula el dinero en céntimos para evitar errores al sumar decimales
-                $precioCentimos = (int) str_replace('.', '', $producto->precio);
+                $precioSinPuntoDecimal = str_replace('.', '', $producto->precio);
+                $precioCentimos = (int) $precioSinPuntoDecimal;
                 $subtotalCentimos = $precioCentimos * $cantidad;
                 $totalCentimos = $totalCentimos + $subtotalCentimos;
+                $subtotalEuros = $subtotalCentimos / 100;
 
                 $lineas[] = [
                     'producto' => $producto,
                     'cantidad' => $cantidad,
-                    'subtotal' => $subtotalCentimos / 100,
+                    'subtotal' => $subtotalEuros,
                 ];
             }
         }
 
         $total = $totalCentimos / 100;
 
-        $usuario = $request->user();
-        $tipoDireccion = $request->query('envio');
+        // Elijo qué datos de envío se muestran en función de la opción elegida
+        $usuario = $peticion->user();
+        $tipoDireccion = $peticion->query('envio');
         $tiposDireccion = ['habitual', 'nueva', 'pedido'];
+        $tipoDireccionValido = in_array($tipoDireccion, $tiposDireccion, true);
+
         $mostrarEnvio = $pagoAbierto;
-        if ($usuario !== null && in_array($tipoDireccion, $tiposDireccion, true)) {
+        if ($usuario !== null && $tipoDireccionValido) {
             $mostrarEnvio = true;
         }
 
-        $camposEnvio = ['nombre', 'apellidos', 'email', 'telefono', 'direccion', 'codigo_postal', 'localidad', 'provincia'];
+        $camposEnvio = [
+            'nombre',
+            'apellidos',
+            'email',
+            'telefono',
+            'direccion',
+            'codigo_postal',
+            'localidad',
+            'provincia',
+        ];
+
         // Empiezo con un formulario vacío y lo relleno si hay una dirección que recuperar
         $datosEnvio = array_fill_keys($camposEnvio, '');
         if ($pedido !== null && ($tipoDireccion === 'pedido' || $pagoAbierto)) {
@@ -122,7 +155,7 @@ class CarritoController extends Controller
             }
         }
 
-        return view('carrito', [
+        $datosVistaCarrito = [
             'lineas' => $lineas,
             'total' => $total,
             'totalCentimos' => $totalCentimos,
@@ -130,95 +163,166 @@ class CarritoController extends Controller
             'tipoDireccion' => $tipoDireccion,
             'datosEnvio' => $datosEnvio,
             'pagoAbierto' => $pagoAbierto,
-        ]);
+        ];
+
+        return view('carrito', $datosVistaCarrito);
     }
 
     // Método: Añadir una unidad al carrito sin superar el stock disponible
-    public function agregar(Request $request, Producto $producto)
+    public function agregar(Request $peticion, Producto $producto)
     {
-        // Laravel carga de la bd los datos de productos y consulta su categoría en categorias
-        if (! $producto->activo || ! $producto->categoria || ! $producto->categoria->activa) {
-            return back()->with('aviso', 'Este producto ya no está disponible');
+        $productoDisponible = $this->productoDisponibleEnCatalogo($producto);
+        if (! $productoDisponible) {
+            $respuesta = back();
+            $respuesta->with('aviso', 'Este producto ya no está disponible');
+
+            return $respuesta;
         }
 
-        $this->carrito->incorporarVisitante($request);
+        $this->carrito->incorporarVisitante($peticion);
 
-        return $this->carrito->modificar($request, function () use ($request, $producto) {
-            $pedido = $this->carrito->pedidoPendiente($request);
-            if ($this->carrito->hayPagoAbierto($pedido)) {
+        // El servicio ejecuta este bloque mientras protege el carrito del cliente
+        $operacionAgregar = function () use ($peticion, $producto) {
+            $pedido = $this->carrito->pedidoPendiente($peticion);
+            $hayPagoAbierto = $this->carrito->hayPagoAbierto($pedido);
+
+            if ($hayPagoAbierto) {
                 return $this->pagoEnCurso();
             }
 
-            $carrito = $this->carrito->leer($request);
+            // Busco cuántas unidades había y sumo una
+            $identificadorProducto = $producto->id;
+            $cantidadesCarrito = $this->carrito->leer($peticion);
             $cantidadAnterior = 0;
-            if (isset($carrito[$producto->id])) {
-                $cantidadAnterior = $carrito[$producto->id];
-            }
-            $cantidad = $cantidadAnterior + 1;
 
-            if ($cantidad > $producto->stock) {
-                return back()->with('aviso', 'No hay más unidades disponibles de este producto');
+            if (isset($cantidadesCarrito[$identificadorProducto])) {
+                $cantidadAnterior = $cantidadesCarrito[$identificadorProducto];
             }
 
-            $this->carrito->guardarCantidad($request, $producto->id, $cantidad);
+            $cantidadNueva = $cantidadAnterior + 1;
+            if ($cantidadNueva > $producto->stock) {
+                $respuesta = back();
+                $respuesta->with('aviso', 'No hay más unidades disponibles de este producto');
+
+                return $respuesta;
+            }
+
+            $this->carrito->guardarCantidad($peticion, $identificadorProducto, $cantidadNueva);
 
             return back();
-        });
+        };
+
+        return $this->carrito->modificar($peticion, $operacionAgregar);
     }
 
     // Método: Validar y guardar la cantidad enviada desde el carrito
-    public function actualizar(Request $request, Producto $producto)
+    public function actualizar(Request $peticion, Producto $producto)
     {
-        // Laravel carga de la bd los datos de productos y consulta su categoría en categorias
-        if (! $producto->activo || ! $producto->categoria || ! $producto->categoria->activa || $producto->stock < 1) {
-            $respuesta = redirect()->route('carrito.index');
-            return $respuesta->with('aviso', 'Este producto ya no está disponible');
+        $productoDisponible = $this->productoDisponibleEnCatalogo($producto);
+        $stockDisponible = $producto->stock;
+
+        if (! $productoDisponible || $stockDisponible < 1) {
+            $redireccion = redirect();
+            $respuesta = $redireccion->route('carrito.index');
+            $respuesta->with('aviso', 'Este producto ya no está disponible');
+
+            return $respuesta;
         }
 
-        $datos = $request->validate([
-            'cantidad' => ['required', 'integer', 'min:1', 'max:' . $producto->stock],
-        ], [
+        // La cantidad del formulario debe ser un entero entre uno y el stock disponible
+        $reglasCantidad = [
+            'cantidad' => [
+                'required',
+                'integer',
+                'min:1',
+                'max:' . $stockDisponible,
+            ],
+        ];
+
+        $mensajesCantidad = [
             'cantidad.required' => 'Indica una cantidad',
             'cantidad.integer' => 'La cantidad debe ser un número entero',
             'cantidad.min' => 'La cantidad mínima es una unidad',
             'cantidad.max' => 'La cantidad supera el stock disponible',
-        ]);
+        ];
 
-        $this->carrito->incorporarVisitante($request);
-        return $this->carrito->modificar($request, function () use ($request, $producto, $datos) {
-            $pedido = $this->carrito->pedidoPendiente($request);
-            if ($this->carrito->hayPagoAbierto($pedido)) {
+        $datosValidados = $peticion->validate($reglasCantidad, $mensajesCantidad);
+        $cantidadNueva = (int) $datosValidados['cantidad'];
+        $identificadorProducto = $producto->id;
+
+        $this->carrito->incorporarVisitante($peticion);
+
+        $operacionActualizar = function () use ($peticion, $identificadorProducto, $cantidadNueva) {
+            $pedido = $this->carrito->pedidoPendiente($peticion);
+            $hayPagoAbierto = $this->carrito->hayPagoAbierto($pedido);
+
+            if ($hayPagoAbierto) {
                 return $this->pagoEnCurso();
             }
 
-            $carrito = $this->carrito->leer($request);
-            if (isset($carrito[$producto->id])) {
-                $this->carrito->guardarCantidad($request, $producto->id, (int) $datos['cantidad']);
+            // Solo actualizo productos que ya están en el carrito
+            $cantidadesCarrito = $this->carrito->leer($peticion);
+            if (isset($cantidadesCarrito[$identificadorProducto])) {
+                $this->carrito->guardarCantidad($peticion, $identificadorProducto, $cantidadNueva);
             }
-            return redirect()->route('carrito.index');
-        });
+
+            $redireccion = redirect();
+
+            return $redireccion->route('carrito.index');
+        };
+
+        return $this->carrito->modificar($peticion, $operacionActualizar);
     }
 
     // Método: Retirar un producto del carrito usando su identificador
-    public function eliminar(Request $request, $identificador)
+    public function eliminar(Request $peticion, $identificador)
     {
-        $this->carrito->incorporarVisitante($request);
-        return $this->carrito->modificar($request, function () use ($request, $identificador) {
-            $pedido = $this->carrito->pedidoPendiente($request);
-            if ($this->carrito->hayPagoAbierto($pedido)) {
+        $identificadorProducto = (int) $identificador;
+        $this->carrito->incorporarVisitante($peticion);
+
+        $operacionEliminar = function () use ($peticion, $identificadorProducto) {
+            $pedido = $this->carrito->pedidoPendiente($peticion);
+            $hayPagoAbierto = $this->carrito->hayPagoAbierto($pedido);
+
+            if ($hayPagoAbierto) {
                 return $this->pagoEnCurso();
             }
 
-            $this->carrito->guardarCantidad($request, (int) $identificador, 0);
-            $respuesta = redirect()->route('carrito.index');
-            return $respuesta->with('mensaje', 'Producto eliminado del carrito');
-        });
+            // Una cantidad de cero indica al servicio que debe retirar el producto
+            $this->carrito->guardarCantidad($peticion, $identificadorProducto, 0);
+
+            $redireccion = redirect();
+            $respuesta = $redireccion->route('carrito.index');
+            $respuesta->with('mensaje', 'Producto eliminado del carrito');
+
+            return $respuesta;
+        };
+
+        return $this->carrito->modificar($peticion, $operacionEliminar);
+    }
+
+    // Un producto solo se puede comprar si él y su categoría están activos
+    private function productoDisponibleEnCatalogo(Producto $producto): bool
+    {
+        if (! $producto->activo) {
+            return false;
+        }
+
+        $categoria = $producto->categoria;
+        if ($categoria === null) {
+            return false;
+        }
+
+        return $categoria->activa;
     }
 
     // Método: Avisar de que hay que cerrar el pago antes de editar el carrito
     private function pagoEnCurso()
     {
-        $respuesta = redirect()->route('carrito.index');
-        return $respuesta->with('aviso', 'Pulsa «Modificar pedido» antes de cambiar el carrito.');
+        $redireccion = redirect();
+        $respuesta = $redireccion->route('carrito.index');
+        $respuesta->with('aviso', 'Pulsa «Modificar pedido» antes de cambiar el carrito.');
+
+        return $respuesta;
     }
 }

@@ -7,19 +7,24 @@ use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;
 
 // Se guarda el momento en el que empieza a ejecutarse Laravel para poder medir el tiempo que tarda
-define('LARAVEL_START', microtime(true));
+$inicioEjecucion = microtime(true);
+define('LARAVEL_START', $inicioEjecucion);
 
 // Se comprueba si existe el archivo del modo mantenimiento y, si existe, se carga
-if (file_exists($maintenance = __DIR__.'/../storage/framework/maintenance.php')) {
-    require $maintenance;
+$archivoMantenimiento = __DIR__ . '/../storage/framework/maintenance.php';
+if (file_exists($archivoMantenimiento)) {
+    require $archivoMantenimiento;
 }
 
 // Se carga el sistema de Composer que permite encontrar las clases de Laravel y sus dependencias
-require __DIR__.'/../vendor/autoload.php';
+$archivoCargadorComposer = __DIR__ . '/../vendor/autoload.php';
+require $archivoCargadorComposer;
 
 // Se prepara la aplicación cargando su archivo de arranque
-/** @var Application $app */
-$app = require_once __DIR__.'/../bootstrap/app.php';
+$archivoArranque = __DIR__ . '/../bootstrap/app.php';
+/** @var Application $aplicacion */
+$aplicacion = require_once $archivoArranque;
 
-// Se recoge la petición del navegador y se entrega a Laravel para que busque la ruta y devuelva la respuesta
-$app->handleRequest(Request::capture());
+// Recojo la petición del navegador y la entrego a Laravel para que la atienda
+$peticion = Request::capture();
+$aplicacion->handleRequest($peticion);

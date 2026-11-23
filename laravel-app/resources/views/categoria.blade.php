@@ -14,6 +14,22 @@
 
 @section('contenido')
 
+@php
+    // Preparo la cabecera con imagen cuando la categoría tiene una disponible
+    $claseBanner = 'banner-categoria';
+    $claseContenidoBanner = 'banner-categoria-contenido';
+
+    if ($bannerCategoria) {
+        $claseBanner = 'banner-categoria banner-categoria-con-imagen';
+        $claseContenidoBanner = 'banner-categoria-contenido visually-hidden';
+    }
+
+    // Separo la cantidad de esta página del total de productos de la categoría
+    $cantidadProductosPagina = $productos->count();
+    $cantidadProductosTotal = $productos->total();
+    $direccionOrdenacion = url('/categoria/' . $categoria->slug);
+@endphp
+
 <div class="pagina-categoria">
 
     {{-- MENÚ LATERAL DE CATEGORÍAS --}}
@@ -30,17 +46,17 @@
     <div class="contenido-categoria">
 
         {{-- BANNER DE LA CATEGORÍA --}}
-        <section class="banner-categoria {{ $bannerCategoria ? 'banner-categoria-con-imagen' : '' }}"
+        <section class="{{ $claseBanner }}"
             aria-labelledby="titulo-categoria">
 
             @if ($bannerCategoria)
-            {{-- El texto equivalente permanece disponible para lectores de pantalla. --}}
+            {{-- El texto equivalente permanece disponible para lectores de pantalla --}}
             <img class="banner-categoria-imagen"
                 src="{{ asset($bannerCategoria) }}"
                 alt="" loading="eager" fetchpriority="high">
             @endif
 
-            <div class="banner-categoria-contenido {{ $bannerCategoria ? 'visually-hidden' : '' }}">
+            <div class="{{ $claseContenidoBanner }}">
 
                 <h1 id="titulo-categoria">
                     {{ $categoria->nombre }}
@@ -69,13 +85,13 @@
         <div class="barra-productos">
 
             <p class="contador-productos">
-                Mostrando {{ $productos->count() }}
-                de {{ $productos->total() }} productos
+                Mostrando {{ $cantidadProductosPagina }}
+                de {{ $cantidadProductosTotal }} productos
             </p>
 
             <form
                 method="GET"
-                action="{{ url('/categoria/' . $categoria->slug) }}"
+                action="{{ $direccionOrdenacion }}"
                 class="formulario-ordenacion">
 
                 <label for="orden-productos">
@@ -88,17 +104,17 @@
                     aria-describedby="ayuda-orden"
                     class="form-select">
                     <option value="nombre"
-                        @selected(request('orden', 'nombre' )==='nombre' )>
+                        @selected($ordenSeleccionado === 'nombre')>
                         Nombre
                     </option>
 
                     <option value="precio_asc"
-                        @selected(request('orden')==='precio_asc' )>
+                        @selected($ordenSeleccionado === 'precio_asc')>
                         Precio: menor a mayor
                     </option>
 
                     <option value="precio_desc"
-                        @selected(request('orden')==='precio_desc' )>
+                        @selected($ordenSeleccionado === 'precio_desc')>
                         Precio: mayor a menor
                     </option>
 
@@ -144,10 +160,16 @@
         {{-- PAGINACIÓN --}}
         @if ($productos->hasPages())
 
+        @php
+            // Conservo el orden elegido al pasar a otra página
+            $productos->withQueryString();
+            $enlacesPaginacion = $productos->links('pagination::bootstrap-5');
+        @endphp
+
         <nav class="paginacion-productos"
             aria-label="Páginas de productos">
 
-            {{ $productos->withQueryString()->links('pagination::bootstrap-5') }}
+            {{ $enlacesPaginacion }}
 
         </nav>
 
@@ -161,12 +183,15 @@
 
 @push('scripts')
 <script>
-    // Ordenar al seleccionar en todos los dispositivos. Sin JavaScript se conserva el botón
+    // Al elegir un orden, envío el formulario automáticamente
     const selectorOrden = document.getElementById('orden-productos');
+
     if (selectorOrden) {
-        selectorOrden.form.classList.add('ordenacion-automatica');
+        const formularioOrdenacion = selectorOrden.form;
+        formularioOrdenacion.classList.add('ordenacion-automatica');
+
         selectorOrden.addEventListener('change', () => {
-            selectorOrden.form.requestSubmit();
+            formularioOrdenacion.requestSubmit();
         });
     }
 </script>

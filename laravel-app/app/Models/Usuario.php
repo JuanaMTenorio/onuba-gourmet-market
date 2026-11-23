@@ -7,8 +7,8 @@ use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 
 // Representa un usuario de la tienda y permite que Laravel lo autentique
-// Permite asignar estos campos juntos al registrar un usuario
-// La base de datos asigna el identificador y el rol de cliente, y Laravel gestiona las fechas
+// Fillable enumera los campos que puedo guardar con Usuario::create al registrar la cuenta
+// La base de datos asigna el identificador y el rol de cliente
 #[Fillable([
     'nombre',
     'apellidos',
@@ -20,7 +20,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
     'localidad',
     'provincia',
 ])]
-// Oculta la contraseña cuando el modelo se convierte en un array o en JSON
+// Hidden oculta el hash de la contraseña al convertir el usuario en un array o en JSON
 #[Hidden(['password'])]
 class Usuario extends Authenticatable
 {
@@ -30,6 +30,8 @@ class Usuario extends Authenticatable
     // Laravel convierte la contraseña en un hash antes de guardarla
     protected function casts(): array
     {
-        return ['password' => 'hashed'];
+        return [
+            'password' => 'hashed',
+        ];
     }
 }

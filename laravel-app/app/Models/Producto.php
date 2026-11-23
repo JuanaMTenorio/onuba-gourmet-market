@@ -43,10 +43,14 @@ class Producto extends Model
     // Deben utilizarse con validate antes de guardar porque Eloquent no las ejecuta solo
     public function reglasValidacion(): array
     {
+        // Compruebo que el slug no esté repetido y excluyo el producto que estoy editando
+        $reglaSlugUnico = Rule::unique('productos', 'slug');
+        $reglaSlugUnico->ignore($this);
+
         return [
             'categoria_id' => ['required', 'integer', 'exists:categorias,id'],
             'nombre' => ['required', 'string', 'max:100'],
-            'slug' => ['required', 'string', 'max:170', Rule::unique('productos', 'slug')->ignore($this)],
+            'slug' => ['required', 'string', 'max:170', $reglaSlugUnico],
             'descripcion' => ['nullable', 'string'],
             'precio' => ['required', 'numeric', 'min:0', 'max:99999999.99', 'decimal:0,2'],
             'stock' => ['required', 'integer', 'min:0', 'max:2147483647'],
@@ -60,6 +64,10 @@ class Producto extends Model
     // Cada producto pertenece a una categoría mediante el campo categoria_id
     public function categoria(): BelongsTo
     {
-        return $this->belongsTo(Categoria::class, 'categoria_id');
+        $nombreClaseCategoria = 'App\Models\Categoria';
+        $columnaQueRelacionaLaCategoria = 'categoria_id';
+        $categoriaRelacionada = $this->belongsTo($nombreClaseCategoria, $columnaQueRelacionaLaCategoria);
+
+        return $categoriaRelacionada;
     }
 }

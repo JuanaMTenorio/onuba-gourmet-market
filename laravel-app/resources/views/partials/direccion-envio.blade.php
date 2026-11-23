@@ -3,18 +3,46 @@
     <h2 id="titulo-direccion-envio">Dirección de envío</h2>
 
     @if (! $pagoAbierto)
-    <nav id="opciones-envio" class="d-flex flex-wrap gap-2 mb-4" aria-label="Elegir dirección de envío">
-        <a href="{{ route('carrito.index', ['envio' => 'habitual']) }}#direccion-envio"
-            @class(['btn', 'btn-dark' => $tipoDireccion === 'habitual', 'btn-outline-dark' => $tipoDireccion !== 'habitual'])
-            @if ($tipoDireccion === 'habitual') aria-current="true" @endif>
-            Usar mi dirección habitual
-        </a>
-        <a href="{{ route('carrito.index', ['envio' => 'nueva']) }}#direccion-envio"
-            @class(['btn', 'btn-dark' => $tipoDireccion === 'nueva', 'btn-outline-dark' => $tipoDireccion !== 'nueva'])
-            @if ($tipoDireccion === 'nueva') aria-current="true" @endif>
-            Introducir otra dirección
-        </a>
-    </nav>
+        @php
+            // Preparo los enlaces y hago que ambos lleven al formulario de envío
+            $direccionHabitual = route('carrito.index', ['envio' => 'habitual']);
+            $enlaceDireccionHabitual = $direccionHabitual . '#direccion-envio';
+
+            $direccionNueva = route('carrito.index', ['envio' => 'nueva']);
+            $enlaceDireccionNueva = $direccionNueva . '#direccion-envio';
+
+            // Resalto la opción de envío que tiene seleccionada el cliente
+            $usaDireccionHabitual = $tipoDireccion === 'habitual';
+            $usaDireccionNueva = $tipoDireccion === 'nueva';
+            $claseDireccionHabitual = 'btn btn-outline-dark';
+            $claseDireccionNueva = 'btn btn-outline-dark';
+
+            if ($usaDireccionHabitual) {
+                $claseDireccionHabitual = 'btn btn-dark';
+            }
+
+            if ($usaDireccionNueva) {
+                $claseDireccionNueva = 'btn btn-dark';
+            }
+        @endphp
+
+        <nav id="opciones-envio" class="d-flex flex-wrap gap-2 mb-4" aria-label="Elegir dirección de envío">
+            <a href="{{ $enlaceDireccionHabitual }}"
+                class="{{ $claseDireccionHabitual }}"
+                @if ($usaDireccionHabitual)
+                    aria-current="true"
+                @endif>
+                Usar mi dirección habitual
+            </a>
+
+            <a href="{{ $enlaceDireccionNueva }}"
+                class="{{ $claseDireccionNueva }}"
+                @if ($usaDireccionNueva)
+                    aria-current="true"
+                @endif>
+                Introducir otra dirección
+            </a>
+        </nav>
     @endif
 
     <form id="formulario-pago" method="POST" action="{{ route('carrito.pago.iniciar') }}">

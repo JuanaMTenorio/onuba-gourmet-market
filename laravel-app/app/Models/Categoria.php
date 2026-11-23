@@ -34,9 +34,13 @@ class Categoria extends Model
     // Deben utilizarse con validate antes de guardar porque Eloquent no las ejecuta solo
     public function reglasValidacion(): array
     {
+        // Compruebo que el slug no esté repetido y excluyo la categoría que estoy editando
+        $reglaSlugUnico = Rule::unique('categorias', 'slug');
+        $reglaSlugUnico->ignore($this);
+
         return [
             'nombre' => ['required', 'string', 'max:50'],
-            'slug' => ['required', 'string', 'max:120', Rule::unique('categorias', 'slug')->ignore($this)],
+            'slug' => ['required', 'string', 'max:120', $reglaSlugUnico],
             'descripcion' => ['nullable', 'string'],
             'imagen' => ['nullable', 'string', 'max:255'],
             'activa' => ['required', 'boolean'],
@@ -46,6 +50,10 @@ class Categoria extends Model
     // Una categoría puede tener varios productos relacionados mediante categoria_id
     public function productos(): HasMany
     {
-        return $this->hasMany(Producto::class, 'categoria_id');
+        $nombreClaseProducto = 'App\Models\Producto';
+        $columnaQueRelacionaLosProductos = 'categoria_id';
+        $productosRelacionados = $this->hasMany($nombreClaseProducto, $columnaQueRelacionaLosProductos);
+
+        return $productosRelacionados;
     }
 }

@@ -6,28 +6,49 @@ use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
 
-// Se indica la carpeta raíz de la aplicación, en este caso laravel-app
-return Application::configure(basePath: dirname(__DIR__))
-    // Se establecen los archivos de rutas y la dirección para comprobar que la aplicación responde
-    ->withRouting(
-        // Las rutas de las páginas web se definen en routes/web.php
-        web: __DIR__.'/../routes/web.php',
-        // Los comandos de consola se pueden definir en routes/console.php
-        commands: __DIR__.'/../routes/console.php',
-        // La dirección /up permite comprobar que la aplicación arranca correctamente
-        health: '/up',
-    )
-    // Aquí se pueden configurar los middleware, que realizan tareas antes o después de atender una petición
-    ->withMiddleware(function (Middleware $middleware): void {
-        // Stripe envía el aviso desde fuera de Onuba y el controlador comprueba su firma
-        $middleware->preventRequestForgery(except: ['stripe/webhook']);
-    })
-    // Aquí se configura cómo se presentan los errores de la aplicación
-    ->withExceptions(function (Exceptions $exceptions): void {
-        // Los errores se devuelven en formato JSON si la ruta empieza por api/ o la petición espera JSON
-        $exceptions->shouldRenderJsonWhen(
-            fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
-        );
-    })
-    // Se crea la aplicación con la configuración anterior
-    ->create();
+// Empiezo la configuración desde la carpeta raíz de Laravel
+$carpetaAplicacion = dirname(__DIR__);
+$configuracionAplicacion = Application::configure(basePath: $carpetaAplicacion);
+
+// Indico dónde están las rutas web y los comandos, y registro la dirección de comprobación
+$archivoRutasWeb = $carpetaAplicacion . '/routes/web.php';
+$archivoComandos = $carpetaAplicacion . '/routes/console.php';
+$direccionComprobacion = '/up';
+
+$configuracionAplicacion->withRouting(
+    web: $archivoRutasWeb,
+    commands: $archivoComandos,
+    health: $direccionComprobacion,
+);
+
+// Stripe envía el aviso sin el token de los formularios de Onuba
+// El controlador de pago comprueba la firma al recibir el aviso
+$configurarProteccionFormularios = function (Middleware $middleware): void {
+    $rutasSinTokenDeFormulario = [
+        'stripe/webhook',
+    ];
+
+    $middleware->preventRequestForgery(except: $rutasSinTokenDeFormulario);
+};
+
+$configuracionAplicacion->withMiddleware($configurarProteccionFormularios);
+
+// Decido en qué peticiones Laravel debe devolver los errores en JSON
+$configurarFormatoErrores = function (Exceptions $configuracionErrores): void {
+    $devolverErrorEnJson = function (Request $peticion): bool {
+        if ($peticion->is('api/*')) {
+            return true;
+        }
+
+        return $peticion->expectsJson();
+    };
+
+    $configuracionErrores->shouldRenderJsonWhen($devolverErrorEnJson);
+};
+
+$configuracionAplicacion->withExceptions($configurarFormatoErrores);
+
+// Creo la aplicación cuando ya he preparado sus rutas y el tratamiento de las peticiones
+$aplicacion = $configuracionAplicacion->create();
+
+return $aplicacion;

@@ -17,14 +17,34 @@
 </section>
 
 <div class="carrito-contenedor">
-    @if (count($lineas) === 0)
+    {{-- El número de pedido solo llega al carrito después de confirmar el pago --}}
+    @php
+        $identificadorPedidoPagado = session('pedido_pagado_id');
+        $hayPedidoPagado = $identificadorPedidoPagado !== null;
+
+        // Compruebo si el carrito tiene productos para elegir qué sección mostrar
+        $cantidadLineasCarrito = count($lineas);
+        $carritoEstaVacio = $cantidadLineasCarrito === 0;
+    @endphp
+
+    @if ($carritoEstaVacio)
         <section class="carrito-vacio" aria-label="Carrito vacío">
             <i class="bi bi-bag" aria-hidden="true"></i>
             <h2>Tu carrito está vacío</h2>
+
+            {{-- Si se acaba de confirmar un pago, muestro el aviso debajo del título --}}
+            @if ($hayPedidoPagado)
+                @include('partials.confirmacion-pago')
+            @endif
+
             <p>Descubre los sabores de Huelva y elige tus favoritos</p>
             <a href="{{ url('/') }}" class="carrito-seguir"><i class="bi bi-arrow-left" aria-hidden="true"></i> Seguir comprando</a>
         </section>
     @else
+        @if ($hayPedidoPagado)
+            @include('partials.confirmacion-pago')
+        @endif
+
         <div class="carrito-distribucion">
             <div class="carrito-columna-productos">
                 <section class="carrito-productos" aria-label="Productos del carrito">
@@ -38,40 +58,90 @@
                     </div>
 
                     @foreach ($lineas as $linea)
-                        <article class="carrito-producto" aria-labelledby="nombre-{{ $linea['producto']->id }}">
+                        @php
+                            // Separo los datos del producto de la cantidad y el subtotal del carrito
+                            $producto = $linea['producto'];
+                            $identificadorProducto = $producto->id;
+                            $cantidadProducto = $linea['cantidad'];
+                            $stockDisponible = $producto->stock;
+
+                            // Convierto el nombre de la imagen del catálogo en su dirección pública
+                            $nombreImagen = (string) $producto->imagen;
+                            $nombreImagenWebp = preg_replace('/\.(png|jpe?g)$/i', '.webp', $nombreImagen);
+                            $direccionImagenProducto = asset('imagen/productos/' . $nombreImagenWebp);
+
+                            $precioFormateado = number_format($producto->precio, 2, ',', '.');
+                            $subtotalFormateado = number_format($linea['subtotal'], 2, ',', '.');
+
+                            // Con el pago abierto desactivo los cambios y aplico los límites de cantidad
+                            $desactivarBotonReducir = $pagoAbierto || $cantidadProducto <= 1;
+                            $desactivarBotonAumentar = $pagoAbierto || $cantidadProducto >= $stockDisponible;
+
+                            $direccionActualizarProducto = route('carrito.actualizar', $identificadorProducto);
+                            $direccionEliminarProducto = route('carrito.eliminar', $identificadorProducto);
+                        @endphp
+
+                        <article class="carrito-producto" aria-labelledby="nombre-{{ $identificadorProducto }}">
                             <div class="carrito-detalle">
-                                <img src="{{ asset('imagen/productos/' . preg_replace('/\.(png|jpe?g)$/i', '.webp', $linea['producto']->imagen)) }}"
+                                <img src="{{ $direccionImagenProducto }}"
                                     alt="" width="140" height="100">
                                 <div>
-                                    <h2 id="nombre-{{ $linea['producto']->id }}">{{ $linea['producto']->nombre }}</h2>
-                                    @if ($linea['producto']->formato)
-                                        <p>{{ $linea['producto']->formato }}</p>
+                                    <h2 id="nombre-{{ $identificadorProducto }}">{{ $producto->nombre }}</h2>
+                                    @if ($producto->formato)
+                                        <p>{{ $producto->formato }}</p>
                                     @endif
                                 </div>
                             </div>
 
-                            <p class="carrito-precio"><span class="visually-hidden">Precio por unidad </span>{{ number_format($linea['producto']->precio, 2, ',', '.') }} €</p>
+                            <p class="carrito-precio">
+                                <span class="visually-hidden">Precio por unidad </span>{{ $precioFormateado }} €
+                            </p>
 
                             {{-- Los botones cambian la cantidad y envían este mismo formulario --}}
-                            <form method="POST" action="{{ route('carrito.actualizar', $linea['producto']->id) }}" class="carrito-formulario-cantidad">
+                            <form method="POST" action="{{ $direccionActualizarProducto }}" class="carrito-formulario-cantidad">
                                 @csrf
                                 @method('PATCH')
-                                <label for="cantidad-{{ $linea['producto']->id }}" class="visually-hidden">Cantidad de {{ $linea['producto']->nombre }}</label>
+                                <label for="cantidad-{{ $identificadorProducto }}" class="visually-hidden">Cantidad de {{ $producto->nombre }}</label>
                                 <div class="carrito-selector">
-                                    <button type="button" class="carrito-menos" aria-label="Reducir cantidad de {{ $linea['producto']->nombre }}" @disabled($pagoAbierto || $linea['cantidad'] <= 1)>−</button>
-                                    <input type="number" id="cantidad-{{ $linea['producto']->id }}" name="cantidad"
-                                        value="{{ $linea['cantidad'] }}" min="1" max="{{ $linea['producto']->stock }}" @disabled($pagoAbierto) required>
-                                    <button type="button" class="carrito-mas" aria-label="Aumentar cantidad de {{ $linea['producto']->nombre }}" @disabled($pagoAbierto || $linea['cantidad'] >= $linea['producto']->stock)>+</button>
+                                    <button
+                                        type="button"
+                                        class="carrito-menos"
+                                        aria-label="Reducir cantidad de {{ $producto->nombre }}"
+                                        @disabled($desactivarBotonReducir)>−</button>
+
+                                    <input
+                                        type="number"
+                                        id="cantidad-{{ $identificadorProducto }}"
+                                        name="cantidad"
+                                        value="{{ $cantidadProducto }}"
+                                        min="1"
+                                        max="{{ $stockDisponible }}"
+                                        @disabled($pagoAbierto)
+                                        required>
+
+                                    <button
+                                        type="button"
+                                        class="carrito-mas"
+                                        aria-label="Aumentar cantidad de {{ $producto->nombre }}"
+                                        @disabled($desactivarBotonAumentar)>+</button>
                                 </div>
                                 <button type="submit" class="carrito-actualizar" @disabled($pagoAbierto)>Actualizar</button>
                             </form>
 
-                            <p class="carrito-subtotal"><span class="carrito-etiqueta-subtotal">Subtotal </span>{{ number_format($linea['subtotal'], 2, ',', '.') }} €</p>
+                            <p class="carrito-subtotal">
+                                <span class="carrito-etiqueta-subtotal">Subtotal </span>{{ $subtotalFormateado }} €
+                            </p>
 
-                            <form method="POST" action="{{ route('carrito.eliminar', $linea['producto']->id) }}" class="carrito-formulario-eliminar">
+                            <form method="POST" action="{{ $direccionEliminarProducto }}" class="carrito-formulario-eliminar">
                                 @csrf
                                 @method('DELETE')
-                                <button type="submit" class="carrito-eliminar" aria-label="Eliminar {{ $linea['producto']->nombre }} del carrito" @disabled($pagoAbierto)><i class="bi bi-trash3" aria-hidden="true"></i></button>
+                                <button
+                                    type="submit"
+                                    class="carrito-eliminar"
+                                    aria-label="Eliminar {{ $producto->nombre }} del carrito"
+                                    @disabled($pagoAbierto)>
+                                    <i class="bi bi-trash3" aria-hidden="true"></i>
+                                </button>
                             </form>
                         </article>
                     @endforeach
@@ -88,11 +158,18 @@
             </div>
 
             <aside class="carrito-resumen" aria-labelledby="titulo-resumen">
+                @php
+                    // Cuento unidades para que dos ejemplares del mismo producto sumen dos
+                    $cantidadesProductos = array_column($lineas, 'cantidad');
+                    $cantidadTotalProductos = array_sum($cantidadesProductos);
+                    $totalFormateado = number_format($total, 2, ',', '.');
+                @endphp
+
                 <h2 id="titulo-resumen">Resumen del pedido</h2>
                 <div class="carrito-importes">
-                    <p><span>Subtotal ({{ array_sum(array_column($lineas, 'cantidad')) }} unidades)</span><span>{{ number_format($total, 2, ',', '.') }} €</span></p>
+                    <p><span>Subtotal ({{ $cantidadTotalProductos }} unidades)</span><span>{{ $totalFormateado }} €</span></p>
                     <p><span>Gastos de envío estándar</span><span>0,00 €</span></p>
-                    <p class="carrito-total"><span>Total del pedido</span><strong>{{ number_format($total, 2, ',', '.') }} €</strong></p>
+                    <p class="carrito-total"><span>Total del pedido</span><strong>{{ $totalFormateado }} €</strong></p>
                 </div>
 
                 @if (! $mostrarEnvio)
@@ -111,7 +188,7 @@
             <div class="carrito-acciones">
                 <a href="{{ url('/') }}" class="carrito-seguir"><i class="bi bi-arrow-left" aria-hidden="true"></i> Seguir comprando</a>
                 @if ($mostrarEnvio)
-                    <button id="boton-pago" type="submit" form="formulario-pago" class="carrito-seguir">
+                    <button id="boton-pago" type="submit" form="formulario-pago" class="carrito-seguir" disabled>
                         @if ($pagoAbierto)
                             Continuar pago
                         @else
@@ -126,6 +203,7 @@
             </div>
             @if ($mostrarEnvio)
                 <p id="aviso-stripe" class="carrito-aviso-stripe" role="status" hidden></p>
+                <noscript><p class="carrito-aviso-stripe">Activa JavaScript para abrir el formulario de pago.</p></noscript>
             @endif
         </div>
     @endif
@@ -160,15 +238,19 @@
         botonActualizar.hidden = true;
     });
 </script>
-@if ($mostrarEnvio && count($lineas) > 0)
-    <script src="https://js.stripe.com/endive/stripe.js"></script>
+@if ($mostrarEnvio && ! $carritoEstaVacio)
+    @php
+        $clavePublicableStripe = config('services.stripe.publicable');
+    @endphp
+
+    <script src="https://js.stripe.com/endive/stripe.js" defer></script>
     <script>
         const formularioPago = document.getElementById('formulario-pago');
         const botonPago = document.getElementById('boton-pago');
         const avisoPago = document.getElementById('aviso-stripe');
         const seccionPago = document.getElementById('seccion-pago');
 
-        // Función: Desactivar la edición del carrito y del envío al abrir el pago
+        // Desactivo los campos que ya no pueden cambiarse mientras Stripe prepara el cobro
         function bloquearEdicionDelPedido() {
             const formularioModificar = document.getElementById('modificar-pedido');
             const camposEnvio = document.getElementById('campos-envio');
@@ -177,6 +259,7 @@
 
             formularioModificar.hidden = false;
             camposEnvio.disabled = true;
+
             if (opcionesEnvio !== null) {
                 opcionesEnvio.classList.add('d-none');
             }
@@ -186,24 +269,44 @@
             }
         }
 
-        // Función: Enviar el formulario a Laravel y pedir el código de la sesión de Stripe
+        // Envío el formulario a Laravel para pedir el código de la sesión de Stripe
         async function pedirSesionPago() {
             const camposFormulario = new FormData(formularioPago);
-            const respuesta = await fetch(formularioPago.action, {
+            const direccionIniciarPago = formularioPago.action;
+            const opcionesPeticion = {
                 method: 'POST',
-                headers: { Accept: 'application/json' },
+                headers: {
+                    Accept: 'application/json',
+                },
                 body: camposFormulario,
-            });
-            const datos = await respuesta.json();
+            };
 
-            if (!respuesta.ok || !datos.clientSecret) {
-                let mensaje = datos.message || 'No se pudo abrir el pago.';
+            const respuesta = await fetch(direccionIniciarPago, opcionesPeticion);
+            if (!respuesta.headers.get('Content-Type')?.includes('application/json')) {
+                throw new Error('No se pudo abrir el pago. Recarga el carrito e inténtalo de nuevo.');
+            }
 
+            const datosRespuesta = await respuesta.json();
+            const codigoSesionPago = datosRespuesta.clientSecret;
+            const peticionCorrecta = respuesta.ok;
+
+            if (!peticionCorrecta || !codigoSesionPago) {
+                let mensaje = 'No se pudo abrir el pago.';
+                if (datosRespuesta.message) {
+                    mensaje = datosRespuesta.message;
+                }
+
+                const erroresValidacion = datosRespuesta.errors;
                 // Muestro el primer error de validación que devuelve Laravel
-                if (datos.errors) {
-                    for (const erroresDelCampo of Object.values(datos.errors)) {
+                if (erroresValidacion) {
+                    const erroresPorCampo = Object.values(erroresValidacion);
+                    for (const erroresDelCampo of erroresPorCampo) {
                         if (erroresDelCampo.length > 0) {
-                            mensaje = erroresDelCampo[0] || mensaje;
+                            const primerError = erroresDelCampo[0];
+                            if (primerError) {
+                                mensaje = primerError;
+                            }
+
                             break;
                         }
                     }
@@ -212,10 +315,12 @@
             }
 
             bloquearEdicionDelPedido();
-            return datos.clientSecret;
+            botonPago.textContent = 'Continuar pago';
+
+            return codigoSesionPago;
         }
 
-        // Función: Abrir el formulario de Stripe o mostrar el error
+        // Muestro el formulario de Stripe dentro del carrito
         async function mostrarPago(evento) {
             evento.preventDefault();
             botonPago.disabled = true;
@@ -223,30 +328,43 @@
             avisoPago.textContent = 'Abriendo el pago…';
 
             try {
-                const clave = @json(config('services.stripe.publicable'));
+                const clavePublicable = @json($clavePublicableStripe);
+                const claveEsTexto = typeof clavePublicable === 'string';
+                const hayClaveDePrueba = claveEsTexto && clavePublicable.startsWith('pk_test_');
+                const bibliotecaStripeCargada = typeof Stripe === 'function';
 
-                const hayClaveDePrueba = typeof clave === 'string' && clave.startsWith('pk_test_');
-                if (typeof Stripe !== 'function' || !hayClaveDePrueba) {
+                if (!bibliotecaStripeCargada) {
+                    throw new Error('El formulario de Stripe aún no está disponible. Inténtalo en unos segundos o recarga el carrito.');
+                }
+
+                if (!hayClaveDePrueba) {
                     throw new Error('Stripe no está disponible. Comprueba la clave publicable de pruebas y recarga la página.');
                 }
 
-                const stripe = Stripe(clave);
-                const checkout = await stripe.createEmbeddedCheckoutPage({
+                const clienteStripe = Stripe(clavePublicable);
+                const opcionesFormularioStripe = {
                     fetchClientSecret: pedirSesionPago,
-                });
+                };
+                const formularioStripe = await clienteStripe.createEmbeddedCheckoutPage(opcionesFormularioStripe);
 
                 seccionPago.hidden = false;
-                checkout.mount('#checkout-stripe');
+                formularioStripe.mount('#checkout-stripe');
                 seccionPago.scrollIntoView({ block: 'start' });
                 botonPago.hidden = true;
                 avisoPago.hidden = true;
             } catch (error) {
-                avisoPago.textContent = error.message || 'No se pudo abrir el pago.';
+                let mensajeAviso = 'No se pudo abrir el pago.';
+                if (error.message) {
+                    mensajeAviso = error.message;
+                }
+
+                avisoPago.textContent = mensajeAviso;
                 botonPago.disabled = false;
             }
         }
 
         formularioPago.addEventListener('submit', mostrarPago);
+        botonPago.disabled = false;
     </script>
 @endif
 @endpush

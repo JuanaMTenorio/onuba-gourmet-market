@@ -7,8 +7,11 @@ use App\Models\Usuario;
 use App\Services\Carrito;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Stripe\Checkout\Session;
+use Stripe\Exception\ApiConnectionException;
 use Stripe\Exception\ApiErrorException;
 use Stripe\Exception\SignatureVerificationException;
 use Stripe\StripeClient;
@@ -18,35 +21,50 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class PagoController extends Controller
 {
-    // Método: Guardar el pedido y devolver los datos para abrir el pago
-    public function iniciar(Request $request, Carrito $carrito)
-    {
-        $stripe = $this->stripe();
-        $carrito->incorporarVisitante($request);
+    // Guardo el pedido y devuelvo el código que permite abrir el formulario de Stripe
+    public function iniciar(Request $peticion, Carrito $carrito) {
 
-        return $carrito->modificar($request, function () use ($request, $carrito, $stripe) {
-            $usuario = $request->user();
-            $usuarioId = $usuario->id;
-            $pedido = $carrito->pedidoPendiente($request);
+        $clienteStripe = $this->crearClienteStripe();
+        $carrito->incorporarVisitante($peticion);
+
+        // El servicio ejecuta este bloque mientras protege el carrito del cliente
+        $operacionIniciarPago = function () use ($peticion, $carrito, $clienteStripe) {
+            $usuario = $peticion->user();
+            $identificadorUsuario = $usuario->id;
+
+            $pedidoPendiente = $carrito->pedidoPendiente($peticion);
+            $hayPagoAbierto = $carrito->hayPagoAbierto($pedidoPendiente);
+            $respuesta = response();
 
             try {
                 // Si el intento sigue abierto, devuelvo el mismo código de pago
-                if ($carrito->hayPagoAbierto($pedido)) {
-                    $checkout = $stripe->checkout;
-                    $sesionesStripe = $checkout->sessions;
-                    $idSesion = $pedido->stripe_checkout_session_id;
-                    $sesion = $sesionesStripe->retrieve($idSesion);
+                if ($hayPagoAbierto) {
+                    $servicioCheckout = $clienteStripe->checkout;
+                    $sesionesStripe = $servicioCheckout->sessions;
+                    $identificadorSesionStripe = $pedidoPendiente->stripe_checkout_session_id;
+                    $sesionStripe = $this->reintentarConexionStripe(
+                        fn () => $sesionesStripe->retrieve($identificadorSesionStripe),
+                    );
 
-                    if ($sesion->status !== 'open') {
-                        $this->actualizarEstado($sesion);
+                    if ($sesionStripe->status !== 'open') {
+                        $this->actualizarEstado($sesionStripe);
 
-                        return response()->json(['message' => 'El intento anterior ha cambiado de estado. Recarga el carrito para continuar.'], 409);
+                        $datosRespuesta = [
+                            'message' => 'El intento anterior ha cambiado de estado. Recarga el carrito para continuar.',
+                        ];
+
+                        return $respuesta->json($datosRespuesta, 409);
                     }
 
-                    return response()->json(['clientSecret' => $sesion->client_secret]);
+                    $datosRespuesta = [
+                        'clientSecret' => $sesionStripe->client_secret,
+                    ];
+
+                    return $respuesta->json($datosRespuesta);
                 }
 
-                $envio = $request->validate([
+                // Valido los datos de envío y el total que se mostraba en el carrito
+                $reglasEnvio = [
                     'nombre' => ['required', 'string', 'max:100'],
                     'apellidos' => ['required', 'string', 'max:150'],
                     'email' => ['required', 'email', 'max:255'],
@@ -56,212 +74,350 @@ class PagoController extends Controller
                     'localidad' => ['required', 'string', 'max:100'],
                     'provincia' => ['required', 'string', 'max:100'],
                     'total_mostrado' => ['required', 'integer'],
-                ]);
+                ];
+
+                $datosEnvio = $peticion->validate($reglasEnvio);
 
                 // Calculo el importe con el carrito guardado y lo comparo con el que vio el cliente
-                $cantidades = $carrito->leer($request);
-                $carritoCalculado = $this->prepararLineas($cantidades);
-                $lineas = $carritoCalculado['lineas'];
+                $cantidadesCarrito = $carrito->leer($peticion);
+                $carritoCalculado = $this->prepararLineas($cantidadesCarrito);
+                $lineasPedido = $carritoCalculado['lineas'];
                 $totalCentimos = $carritoCalculado['totalCentimos'];
-                $totalMostrado = (int) $envio['total_mostrado'];
+
+                $totalMostrado = (int) $datosEnvio['total_mostrado'];
 
                 if ($totalCentimos !== $totalMostrado) {
-                    $errores = ['pago' => 'El total del carrito ha cambiado. Recarga la página y revisa el importe.'];
+                    $errores = [
+                        'pago' => 'El total del carrito ha cambiado. Recarga la página y revisa el importe.',
+                    ];
+
                     throw ValidationException::withMessages($errores);
                 }
 
+                // Guardo los datos de envío y los importes antes de pedir la sesión a Stripe
+                $totalEuros = $this->convertirCentimosAEuros($totalCentimos);
+                $fechaActualizacion = now();
+
                 $datosPedido = [
-                    'nombre_envio' => $envio['nombre'],
-                    'apellidos_envio' => $envio['apellidos'],
-                    'email_envio' => $envio['email'],
-                    'telefono_envio' => $envio['telefono'],
-                    'direccion_envio' => $envio['direccion'],
-                    'codigo_postal_envio' => $envio['codigo_postal'],
-                    'localidad_envio' => $envio['localidad'],
-                    'provincia_envio' => $envio['provincia'],
-                    'total' => $this->euros($totalCentimos),
-                    'updated_at' => now(),
+                    'nombre_envio' => $datosEnvio['nombre'],
+                    'apellidos_envio' => $datosEnvio['apellidos'],
+                    'email_envio' => $datosEnvio['email'],
+                    'telefono_envio' => $datosEnvio['telefono'],
+                    'direccion_envio' => $datosEnvio['direccion'],
+                    'codigo_postal_envio' => $datosEnvio['codigo_postal'],
+                    'localidad_envio' => $datosEnvio['localidad'],
+                    'provincia_envio' => $datosEnvio['provincia'],
+                    'total' => $totalEuros,
+                    'updated_at' => $fechaActualizacion,
                 ];
 
-                $pedidoId = $this->guardarPedido($pedido, $usuarioId, $datosPedido, $lineas);
-                $sesion = $this->crearSesionPago($stripe, $pedidoId, $envio['email']);
+                $identificadorPedido = $this->guardarPedido(
+                    $pedidoPendiente,
+                    $identificadorUsuario,
+                    $datosPedido,
+                    $lineasPedido,
+                );
 
+                $correoEnvio = $datosEnvio['email'];
+                $sesionStripe = $this->crearSesionPago($clienteStripe, $identificadorPedido, $correoEnvio);
+
+                // Relaciono la sesión de Stripe con el pedido guardado en MySQL
+                $datosSesionStripe = [
+                    'stripe_checkout_session_id' => $sesionStripe->id,
+                ];
                 $consultaPedido = DB::table('pedidos');
-                $consultaPedido->where('id', $pedidoId);
-                $consultaPedido->update([
-                    'stripe_checkout_session_id' => $sesion->id,
+                $consultaPedido->where('id', $identificadorPedido);
+                $consultaPedido->update($datosSesionStripe);
+
+                $datosRespuesta = [
+                    'clientSecret' => $sesionStripe->client_secret,
+                ];
+
+                return $respuesta->json($datosRespuesta);
+            } catch (ApiErrorException $error) {
+                preg_match('/Network error \[errno (\d+)\]/', $error->getMessage(), $errorRed);
+                Log::warning('No se pudo preparar la sesión de Stripe.', [
+                    'operacion' => $hayPagoAbierto ? 'recuperar' : 'crear',
+                    'tipo' => $error::class,
+                    'codigo_red' => $errorRed[1] ?? null,
+                    'estado_http' => $error->getHttpStatus(),
+                    'codigo_stripe' => $error->getStripeCode(),
+                    'peticion_stripe' => $error->getRequestId(),
                 ]);
 
-                return response()->json(['clientSecret' => $sesion->client_secret]);
-            } catch (ApiErrorException $error) {
-                return response()->json(['message' => 'No se pudo preparar el pago en Stripe. Inténtalo de nuevo.'], 502);
+                $mensaje = $error instanceof ApiConnectionException
+                    ? 'No se ha podido conectar con Stripe. Vuelve a pulsar el botón de pago en unos segundos.'
+                    : 'No se pudo preparar el pago en Stripe. Inténtalo de nuevo.';
+                $datosRespuesta = [
+                    'message' => $mensaje,
+                ];
+
+                return $respuesta->json($datosRespuesta, 502);
             }
-        });
+        };
+
+        return $carrito->modificar($peticion, $operacionIniciarPago);
     }
 
-    // Método: Guardar los datos de envío y las líneas del pedido en MySQL
-    private function guardarPedido(?object $pedido, int $usuarioId, array $datosPedido, array $lineas): int
+    // Guardo los datos de envío y las líneas del pedido en MySQL
+    private function guardarPedido(?object $pedidoPendiente, int $identificadorUsuario, array $datosPedido, array $lineasPedido): int
     {
         $consultaPedido = DB::table('pedidos');
 
-        if ($pedido === null) {
-            $datosPedido['usuario_id'] = $usuarioId;
+        if ($pedidoPendiente === null) {
+            // Añado los datos que solo hacen falta al crear un pedido nuevo
+            $datosPedido['usuario_id'] = $identificadorUsuario;
             $datosPedido['estado'] = 'pendiente';
             $datosPedido['fecha'] = now();
             $datosPedido['created_at'] = now();
-            $pedidoId = $consultaPedido->insertGetId($datosPedido);
+            $identificadorPedido = $consultaPedido->insertGetId($datosPedido);
         } else {
-            $pedidoId = $pedido->id;
-            $consultaPedido->where('id', $pedidoId);
+            // Actualizo el pedido existente y reemplazo las líneas con el carrito actual
+            $identificadorPedido = $pedidoPendiente->id;
+            $consultaPedido->where('id', $identificadorPedido);
             $consultaPedido->update($datosPedido);
 
             $consultaDetalles = DB::table('detalles_pedido');
-            $consultaDetalles->where('pedido_id', $pedidoId);
+            $consultaDetalles->where('pedido_id', $identificadorPedido);
             $consultaDetalles->delete();
         }
 
-        $tablaDetalles = DB::table('detalles_pedido');
-        foreach ($lineas as $linea) {
-            $linea['pedido_id'] = $pedidoId;
-            $linea['created_at'] = now();
-            $linea['updated_at'] = now();
-            $tablaDetalles->insert($linea);
+        // Cada línea queda vinculada al pedido mediante la columna pedido_id
+        $tablaDetallesPedido = DB::table('detalles_pedido');
+        foreach ($lineasPedido as $lineaPedido) {
+            $lineaPedido['pedido_id'] = $identificadorPedido;
+            $lineaPedido['created_at'] = now();
+            $lineaPedido['updated_at'] = now();
+
+            $tablaDetallesPedido->insert($lineaPedido);
         }
 
-        return $pedidoId;
+        return $identificadorPedido;
     }
 
-    // Método: Crear en Stripe un intento de pago por el total guardado
-    private function crearSesionPago(StripeClient $stripe, int $pedidoId, string $email): Session
+    // Creo en Stripe una sesión de pago por el importe guardado en el pedido
+    private function crearSesionPago(StripeClient $clienteStripe, int $identificadorPedido, string $correoEnvio): Session
     {
-        $consultaPedido = DB::table('pedidos');
-        $consultaPedido->where('id', $pedidoId);
-        // Recupero de la bd el total guardado en pedidos para enviarlo a Stripe
-        $totalGuardado = $consultaPedido->value('total');
-        $totalCentimos = $this->centimos($totalGuardado);
+        $sqlTotalPedido = '
+            SELECT total
+            FROM pedidos
+            WHERE id = ?
+        ';
 
-        $precio = [
+        $parametrosTotalPedido = [
+            $identificadorPedido,
+        ];
+
+        $totalGuardado = DB::scalar($sqlTotalPedido, $parametrosTotalPedido);
+        $totalCentimos = $this->convertirEurosACentimos($totalGuardado);
+
+        // Stripe recibe el total como una sola línea de cobro en céntimos
+        $datosProductoStripe = [
+            'name' => "Compra en Onuba Gourmet Market. Pedido n.º {$identificadorPedido}",
+        ];
+        $datosPrecio = [
             'currency' => 'eur',
-            'product_data' => ['name' => "Compra en Onuba Gourmet Market. Pedido n.º {$pedidoId}"],
+            'product_data' => $datosProductoStripe,
             'unit_amount' => $totalCentimos,
         ];
         $lineaDeCobro = [
-            'price_data' => $precio,
+            'price_data' => $datosPrecio,
             'quantity' => 1,
         ];
-        $urlResultado = route('carrito.pago.resultado') . '?sesion={CHECKOUT_SESSION_ID}';
+        $lineasCobro = [$lineaDeCobro];
 
-        $datosSesion = [
+        // Stripe sustituye CHECKOUT_SESSION_ID por el identificador de la sesión al volver
+        $direccionResultado = route('carrito.pago.resultado');
+        $direccionRegreso = $direccionResultado . '?sesion={CHECKOUT_SESSION_ID}';
+        $referenciaPedido = (string) $identificadorPedido;
+
+        $datosSesionStripe = [
             'mode' => 'payment',
             'ui_mode' => 'embedded_page',
-            'client_reference_id' => (string) $pedidoId,
-            'customer_email' => $email,
-            'line_items' => [$lineaDeCobro],
-            'return_url' => $urlResultado,
+            'client_reference_id' => $referenciaPedido,
+            'customer_email' => $correoEnvio,
+            'line_items' => $lineasCobro,
+            'return_url' => $direccionRegreso,
         ];
 
-        $checkout = $stripe->checkout;
-        $sesionesStripe = $checkout->sessions;
-        return $sesionesStripe->create($datosSesion);
+        $servicioCheckout = $clienteStripe->checkout;
+        $sesionesStripe = $servicioCheckout->sessions;
+
+        // Stripe recibe la misma clave si la primera petición llega pero su respuesta se pierde.
+        $opcionesStripe = ['idempotency_key' => (string) Str::uuid()];
+
+        return $this->reintentarConexionStripe(
+            fn () => $sesionesStripe->create($datosSesionStripe, $opcionesStripe),
+        );
     }
 
-    // Método: Cerrar el intento de Stripe antes de permitir cambios en el pedido
-    public function modificar(Request $request, Carrito $carrito)
+    private function reintentarConexionStripe(\Closure $operacion): Session
     {
-        $stripe = $this->stripe();
+        return retry(2, $operacion, 500, fn (\Throwable $error) => $error instanceof ApiConnectionException);
+    }
 
-        return $carrito->modificar($request, function () use ($request, $carrito, $stripe) {
-            $pedido = $carrito->pedidoPendiente($request);
+    // Cierro el intento de Stripe antes de permitir cambios en el pedido
+    public function modificar(Request $peticion, Carrito $carrito) {
 
-            if ($carrito->hayPagoAbierto($pedido)) {
+        $clienteStripe = $this->crearClienteStripe();
+
+        $operacionModificarPedido = function () use ($peticion, $carrito, $clienteStripe) {
+            $pedidoPendiente = $carrito->pedidoPendiente($peticion);
+            $hayPagoAbierto = $carrito->hayPagoAbierto($pedidoPendiente);
+            $redireccion = redirect();
+
+            if ($hayPagoAbierto) {
                 try {
-                    $checkout = $stripe->checkout;
-                    $sesionesStripe = $checkout->sessions;
-                    $idSesion = $pedido->stripe_checkout_session_id;
-                    $sesion = $sesionesStripe->retrieve($idSesion);
+                    $servicioCheckout = $clienteStripe->checkout;
+                    $sesionesStripe = $servicioCheckout->sessions;
+                    $identificadorSesionStripe = $pedidoPendiente->stripe_checkout_session_id;
+                    $sesionStripe = $sesionesStripe->retrieve($identificadorSesionStripe);
 
-                    if ($sesion->status === 'open') {
-                        $sesion = $sesionesStripe->expire($sesion->id);
+                    // Solo pido a Stripe que cierre una sesión si todavía está abierta
+                    if ($sesionStripe->status === 'open') {
+                        $identificadorSesionAbierta = $sesionStripe->id;
+                        $sesionStripe = $sesionesStripe->expire($identificadorSesionAbierta);
                     }
 
-                    $this->actualizarEstado($sesion);
+                    $this->actualizarEstado($sesionStripe);
 
-                    if ($sesion->status !== 'expired') {
-                        $respuesta = redirect()->route('carrito.index');
-                        return $respuesta->with('aviso', 'El pago ya se completó o sigue en proceso.');
+                    if ($sesionStripe->status !== 'expired') {
+                        $respuesta = $redireccion->route('carrito.index');
+                        $respuesta->with('aviso', 'El pago ya se completó o sigue en proceso.');
+
+                        return $respuesta;
                     }
                 } catch (ApiErrorException $error) {
-                    $respuesta = redirect()->route('carrito.index');
-                    return $respuesta->with('aviso', 'No se pudo cerrar el intento en Stripe. Inténtalo de nuevo antes de modificar el pedido.');
+                    $respuesta = $redireccion->route('carrito.index');
+                    $respuesta->with('aviso', 'No se pudo cerrar el intento en Stripe. Inténtalo de nuevo antes de modificar el pedido.');
+
+                    return $respuesta;
                 }
             }
 
-            $urlEnvio = route('carrito.index', ['envio' => 'pedido']) . '#direccion-envio';
-            return redirect()->to($urlEnvio);
-        });
+            // Vuelvo al formulario de envío con los datos guardados del pedido
+            $parametrosCarrito = [
+                'envio' => 'pedido',
+            ];
+            $direccionCarrito = route('carrito.index', $parametrosCarrito);
+            $direccionFormularioEnvio = $direccionCarrito . '#direccion-envio';
+
+            return $redireccion->to($direccionFormularioEnvio);
+        };
+
+        return $carrito->modificar($peticion, $operacionModificarPedido);
     }
 
-    // Método: Comprobar a quién pertenece el pedido y consultar si Stripe lo cobró
-    public function resultado(Request $request)
-    {
-        $idSesion = $request->query('sesion');
-        if (! is_string($idSesion)) {
+    // Compruebo el pago y preparo el mensaje que se verá al volver al carrito
+    public function resultado(Request $peticion) {
+
+        // Leo el identificador de la sesión de Stripe que viene en la URL
+        $identificadorSesionStripe = $peticion->query('sesion');
+
+        if (! is_string($identificadorSesionStripe)) {
             throw new NotFoundHttpException();
         }
 
-        $usuario = $request->user();
-        $consultaPedido = DB::table('pedidos');
-        $consultaPedido->where('usuario_id', $usuario->id);
-        $consultaPedido->where('stripe_checkout_session_id', $idSesion);
-        // Recupero de la tabla pedidos de la bd el registro que coincide con el cliente y la sesión de Stripe
-        $pedido = $consultaPedido->first();
+        // Obtengo el identificador del usuario conectado
+        $usuario = $peticion->user();
+        $identificadorUsuario = $usuario->id;
+
+        // Busco el pedido que coincide con el usuario conectado y la sesión de Stripe
+        $sqlPedido = '
+            SELECT id
+            FROM pedidos
+            WHERE usuario_id = ?
+              AND stripe_checkout_session_id = ?
+        ';
+
+        $parametrosPedido = [
+            $identificadorUsuario,
+            $identificadorSesionStripe,
+        ];
+
+        $pedido = DB::selectOne($sqlPedido, $parametrosPedido);
+
         if ($pedido === null) {
             throw new NotFoundHttpException();
         }
 
+        // Preparo la vuelta al carrito para mostrar el resultado de la consulta
+        $redireccion = redirect();
+        $respuesta = $redireccion->route('carrito.index');
+
+        // Consulto el resultado en Stripe y actualizo el estado del pedido
         try {
-            $stripe = $this->stripe();
-            $checkout = $stripe->checkout;
-            $sesionesStripe = $checkout->sessions;
-            $sesion = $sesionesStripe->retrieve($idSesion);
-            $this->actualizarEstado($sesion);
+            $clienteStripe = $this->crearClienteStripe();
+            $servicioCheckout = $clienteStripe->checkout;
+            $sesionesStripe = $servicioCheckout->sessions;
+            $sesionStripe = $sesionesStripe->retrieve($identificadorSesionStripe);
+
+            $this->actualizarEstado($sesionStripe);
         } catch (ApiErrorException $error) {
-            $respuesta = redirect()->route('carrito.index');
-            return $respuesta->with('aviso', 'No se pudo consultar Stripe. El pedido sigue disponible para comprobar su estado.');
+            $mensajeAviso = 'No se pudo consultar Stripe. El pedido sigue disponible para comprobar su estado.';
+            $respuesta->with('aviso', $mensajeAviso);
+
+            return $respuesta;
         }
 
-        $consultaEstado = DB::table('pedidos');
-        $consultaEstado->where('id', $pedido->id);
-        // Recupero de la bd el estado del pedido que está guardado en pedidos
-        $estado = $consultaEstado->value('estado');
+        // Vuelvo a leer el estado porque la consulta a Stripe puede haberlo cambiado
+        $identificadorPedido = $pedido->id;
 
-        $respuesta = redirect()->route('carrito.index');
-        if ($estado === 'pagado') {
-            return $respuesta->with('mensaje', "Pago confirmado. Pedido n.º {$pedido->id}.");
+        $sqlEstadoPedido = '
+            SELECT estado
+            FROM pedidos
+            WHERE id = ?
+        ';
+
+        $parametrosEstadoPedido = [
+            $identificadorPedido,
+        ];
+
+        $estadoPedido = DB::scalar($sqlEstadoPedido, $parametrosEstadoPedido);
+
+        if ($estadoPedido === 'pagado') {
+            // Guardo el número del pedido en la sesión para mostrar el enlace al volver al carrito
+            $respuesta->with('pedido_pagado_id', $identificadorPedido);
+
+            return $respuesta;
         }
 
-        return $respuesta->with('aviso', "El pedido n.º {$pedido->id} todavía no se ha confirmado.");
+        // Muestro un aviso cuando el pago sigue sin confirmar
+        $mensajeAviso = "El pedido n.º {$identificadorPedido} todavía no se ha confirmado.";
+        $respuesta->with('aviso', $mensajeAviso);
+
+        return $respuesta;
     }
 
-    // Método: Verificar el aviso de Stripe y procesar el resultado del pago
-    public function webhook(Request $request)
-    {
-        if (! app()->environment('local')) {
+    // Verifico el aviso que Stripe envía directamente y proceso el estado del pago
+    public function webhook(Request $peticion) {
+
+        $aplicacion = app();
+        $entornoLocal = $aplicacion->environment('local');
+
+        if (! $entornoLocal) {
             throw new NotFoundHttpException();
         }
 
-        $secreto = config('services.stripe.webhook_secret');
-        if (! is_string($secreto) || ! str_starts_with($secreto, 'whsec_')) {
+        $secretoFirmaStripe = config('services.stripe.webhook_secret');
+
+        if (! is_string($secretoFirmaStripe) || ! str_starts_with($secretoFirmaStripe, 'whsec_')) {
             throw new HttpException(503);
         }
 
+        $respuesta = response();
+
+        // Verifico la firma antes de usar los datos del aviso
         try {
-            // El SDK de Stripe comprueba la firma del aviso
-            $contenidoAviso = $request->getContent();
-            $firmaAviso = $request->header('Stripe-Signature', '');
-            $evento = Webhook::constructEvent($contenidoAviso, $firmaAviso, $secreto);
+            $contenidoAviso = $peticion->getContent();
+            $firmaAviso = $peticion->header('Stripe-Signature', '');
+            $evento = Webhook::constructEvent($contenidoAviso, $firmaAviso, $secretoFirmaStripe);
         } catch (\UnexpectedValueException | SignatureVerificationException $error) {
-            return response()->json(['message' => 'Aviso de Stripe no válido.'], 400);
+            $datosRespuesta = [
+                'message' => 'Aviso de Stripe no válido.',
+            ];
+
+            return $respuesta->json($datosRespuesta, 400);
         }
 
         $avisosDePago = [
@@ -270,138 +426,196 @@ class PagoController extends Controller
             'checkout.session.async_payment_failed',
             'checkout.session.expired',
         ];
-        if (! $evento->livemode && in_array($evento->type, $avisosDePago, true)) {
+
+        $tipoAviso = $evento->type;
+        $esAvisoDePago = in_array($tipoAviso, $avisosDePago, true);
+
+        // Solo proceso los avisos de pago que vienen del modo de pruebas
+        if (! $evento->livemode && $esAvisoDePago) {
             $datosAviso = $evento->data;
-            $sesion = $datosAviso->object;
-            $pagoFallido = $evento->type === 'checkout.session.async_payment_failed';
-            $this->actualizarEstado($sesion, $pagoFallido);
+            $sesionStripe = $datosAviso->object;
+            $pagoFallido = $tipoAviso === 'checkout.session.async_payment_failed';
+
+            $this->actualizarEstado($sesionStripe, $pagoFallido);
         }
 
-        return response()->noContent();
+        return $respuesta->noContent();
     }
 
-    // Método: Comprobar el cobro y actualizar el pedido
-    private function actualizarEstado(Session $sesion, bool $pagoFallido = false): void
+    // Compruebo los datos del cobro antes de actualizar el pedido
+    private function actualizarEstado(Session $sesionStripe, bool $pagoFallido = false): void
     {
-        $consultaPedido = DB::table('pedidos');
-        $consultaPedido->where('stripe_checkout_session_id', $sesion->id);
-        // Recupero de la bd el pedido asociado a esta sesión de Stripe en pedidos
-        $pedido = $consultaPedido->first();
+        $identificadorSesionStripe = $sesionStripe->id;
+        $sqlPedido = '
+            SELECT id, usuario_id
+            FROM pedidos
+            WHERE stripe_checkout_session_id = ?
+        ';
+
+        $parametrosPedido = [
+            $identificadorSesionStripe,
+        ];
+
+        $pedido = DB::selectOne($sqlPedido, $parametrosPedido);
 
         if ($pedido === null) {
             return;
         }
 
-        DB::transaction(function () use ($pedido, $sesion, $pagoFallido): void {
-            $consultaUsuario = Usuario::whereKey($pedido->usuario_id);
+        $operacionActualizarEstado = function () use ($pedido, $sesionStripe, $pagoFallido): void {
+            // Bloqueo al usuario mientras actualizo el pedido y su carrito
+            $identificadorUsuario = $pedido->usuario_id;
+            $consultaUsuario = Usuario::query();
+            $consultaUsuario->whereKey($identificadorUsuario);
             $consultaUsuario->lockForUpdate();
-            // Recupero de la bd la fila del cliente en usuarios y la bloqueo durante la operación
             $consultaUsuario->firstOrFail();
 
+            // Vuelvo a leer el pedido porque otra petición pudo haberlo procesado
+            $identificadorPedido = $pedido->id;
             $consultaPedido = DB::table('pedidos');
-            $consultaPedido->where('id', $pedido->id);
-            // Vuelvo a recuperar el pedido de la bd para leer su estado actual en pedidos
-            $actual = $consultaPedido->first();
+            $consultaPedido->where('id', $identificadorPedido);
+            $pedidoActual = $consultaPedido->first();
 
-            // Si ya procesé este pedido o cambió de intento, lo dejo como está
-            if ($actual->estado !== 'pendiente' || $actual->stripe_checkout_session_id !== $sesion->id) {
+            if ($pedidoActual === null) {
                 return;
             }
 
-            $referenciaPedido = (string) $actual->id;
-            if ($sesion->livemode || $sesion->client_reference_id !== $referenciaPedido) {
+            $pedidoSiguePendiente = $pedidoActual->estado === 'pendiente';
+            $esLaMismaSesion = $pedidoActual->stripe_checkout_session_id === $sesionStripe->id;
+
+            if (! $pedidoSiguePendiente || ! $esLaMismaSesion) {
                 return;
             }
 
-            $totalCentimos = $this->centimos($actual->total);
-            if ($sesion->currency !== 'eur' || $sesion->amount_total !== $totalCentimos) {
+            // Verifico la referencia, la moneda y el importe que devuelve Stripe
+            $referenciaPedido = (string) $pedidoActual->id;
+            $referenciaCoincide = $sesionStripe->client_reference_id === $referenciaPedido;
+
+            if ($sesionStripe->livemode || ! $referenciaCoincide) {
                 return;
             }
 
-            $actualizarPedido = DB::table('pedidos');
-            $actualizarPedido->where('id', $actual->id);
+            $totalCentimos = $this->convertirEurosACentimos($pedidoActual->total);
+            $monedaEsEuro = $sesionStripe->currency === 'eur';
+            $importeCoincide = $sesionStripe->amount_total === $totalCentimos;
 
-            // Si se ha cobrado, marco el pedido como pagado y vacío el carrito
-            if ($sesion->payment_status === 'paid') {
-                $actualizarPedido->update(['estado' => 'pagado', 'updated_at' => now()]);
+            if (! $monedaEsEuro || ! $importeCoincide) {
+                return;
+            }
+
+            // Marco el pedido como pagado y vacío el carrito cuando el cobro se ha confirmado
+            if ($sesionStripe->payment_status === 'paid') {
+                $datosPedidoPagado = [
+                    'estado' => 'pagado',
+                    'updated_at' => now(),
+                ];
+                $consultaPedido->update($datosPedidoPagado);
 
                 $consultaCarrito = DB::table('carrito_productos');
-                $consultaCarrito->where('usuario_id', $actual->usuario_id);
+                $consultaCarrito->where('usuario_id', $pedidoActual->usuario_id);
                 $consultaCarrito->delete();
-            } elseif ($sesion->status === 'expired' || $pagoFallido) {
-                // Si el intento caducó o falló, el pedido queda pendiente para volver a editarlo
-                $actualizarPedido->update(['stripe_checkout_session_id' => null, 'updated_at' => now()]);
+
+                return;
             }
-        });
+
+            // Si el intento caducó o falló, quito la sesión para permitir cambios en el pedido
+            if ($sesionStripe->status === 'expired' || $pagoFallido) {
+                $datosIntentoCerrado = [
+                    'stripe_checkout_session_id' => null,
+                    'updated_at' => now(),
+                ];
+                $consultaPedido->update($datosIntentoCerrado);
+            }
+        };
+
+        DB::transaction($operacionActualizarEstado);
     }
 
-    // Método: Comprobar el stock y calcular los subtotales y el total en céntimos
-    private function prepararLineas(array $cantidades): array
+    // Compruebo el stock y calculo el total a partir de los precios de MySQL
+    private function prepararLineas(array $cantidadesCarrito): array
     {
-        $lineas = [];
+        $lineasPedido = [];
         $totalCentimos = 0;
 
-        foreach ($cantidades as $productoId => $cantidad) {
-            $consultaProducto = Producto::where('activo', true);
+        foreach ($cantidadesCarrito as $identificadorProducto => $cantidad) {
+            $consultaProducto = Producto::query();
+            $consultaProducto->where('activo', true);
             $consultaProducto->whereHas('categoria', function ($consultaCategoria) {
                 $consultaCategoria->where('activa', true);
             });
-            // Recupero de la bd el precio y el stock de la tabla productos si el producto y su categoría están activos
-            $producto = $consultaProducto->find($productoId);
 
+            $producto = $consultaProducto->find($identificadorProducto);
             if ($producto === null || $cantidad < 1 || $cantidad > $producto->stock) {
-                $errores = ['pago' => 'Ha cambiado la disponibilidad. Recarga el carrito y revisa las cantidades.'];
+                $errores = [
+                    'pago' => 'Ha cambiado la disponibilidad. Recarga el carrito y revisa las cantidades.',
+                ];
+
                 throw ValidationException::withMessages($errores);
             }
 
-            $precioCentimos = $this->centimos($producto->precio);
+            // Hago las cuentas en céntimos y convierto el subtotal a euros para guardarlo
+            $precioUnitarioEuros = $producto->precio;
+            $precioCentimos = $this->convertirEurosACentimos($precioUnitarioEuros);
             $subtotalCentimos = $precioCentimos * $cantidad;
             $totalCentimos = $totalCentimos + $subtotalCentimos;
-            $lineas[] = [
-                'producto_id' => $productoId,
+            $subtotalEuros = $this->convertirCentimosAEuros($subtotalCentimos);
+
+            $lineasPedido[] = [
+                'producto_id' => $identificadorProducto,
                 'cantidad' => $cantidad,
-                'precio_unitario' => $producto->precio,
-                'subtotal' => $this->euros($subtotalCentimos),
+                'precio_unitario' => $precioUnitarioEuros,
+                'subtotal' => $subtotalEuros,
             ];
         }
 
+        // Compruebo los límites del importe antes de abrir la sesión de Stripe
         if ($totalCentimos < 50 || $totalCentimos > 99999999) {
-            $errores = ['pago' => 'El importe del carrito está fuera de los límites del pago en euros.'];
+            $errores = [
+                'pago' => 'El importe del carrito está fuera de los límites del pago en euros.',
+            ];
+
             throw ValidationException::withMessages($errores);
         }
 
         return [
-            'lineas' => $lineas,
+            'lineas' => $lineasPedido,
             'totalCentimos' => $totalCentimos,
         ];
     }
 
-    // Método: Convertir un importe de euros a céntimos quitando el separador decimal
-    private function centimos(string $importe): int
+    // Si el importe tiene dos decimales, quitar el punto convierte por ejemplo 12.35 en 1235 céntimos
+    private function convertirEurosACentimos(string $importeEuros): int
     {
-        $importeSinPunto = str_replace('.', '', $importe);
-        return (int) $importeSinPunto;
+        $importeSinPunto = str_replace('.', '', $importeEuros);
+        $importeCentimos = (int) $importeSinPunto;
+
+        return $importeCentimos;
     }
 
-    // Método: Convertir céntimos a euros con dos decimales
-    private function euros(int $centimos): string
+    // Devuelvo el importe en euros con dos decimales para guardarlo en MySQL
+    private function convertirCentimosAEuros(int $importeCentimos): string
     {
-        $euros = $centimos / 100;
-        return number_format($euros, 2, '.', '');
+        $importeEuros = $importeCentimos / 100;
+        $importeFormateado = number_format($importeEuros, 2, '.', '');
+
+        return $importeFormateado;
     }
 
-    // Método: Crear el cliente de Stripe con la clave secreta de pruebas
-    private function stripe(): StripeClient
+    // Creo el cliente de Stripe solo en el entorno local y con una clave de pruebas
+    private function crearClienteStripe(): StripeClient
     {
-        if (! app()->environment('local')) {
+        $aplicacion = app();
+        $entornoLocal = $aplicacion->environment('local');
+
+        if (! $entornoLocal) {
             throw new NotFoundHttpException();
         }
 
-        $clave = config('services.stripe.secret');
-        if (! is_string($clave) || ! str_starts_with($clave, 'sk_test_')) {
+        $claveSecretaStripe = config('services.stripe.secret');
+        if (! is_string($claveSecretaStripe) || ! str_starts_with($claveSecretaStripe, 'sk_test_')) {
             throw new HttpException(503, 'Configura la clave secreta de pruebas de Stripe.');
         }
 
-        return new StripeClient($clave);
+        return new StripeClient($claveSecretaStripe);
     }
 }

@@ -21,8 +21,14 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     {{-- La versión cambia al modificar los estilos para evitar una copia antigua en caché --}}
-    {{-- Zonas comunes de todas las páginas --}}
-    <link rel="stylesheet" href="{{ asset('css/zonasComunes.css') }}?v={{ filemtime(public_path('css/zonasComunes.css')) }}">
+    @php
+        $rutaEstilosComunes = 'css/zonasComunes.css';
+        $direccionEstilosComunes = asset($rutaEstilosComunes);
+        $archivoEstilosComunes = public_path($rutaEstilosComunes);
+        $versionEstilosComunes = filemtime($archivoEstilosComunes);
+    @endphp
+
+    <link rel="stylesheet" href="{{ $direccionEstilosComunes }}?v={{ $versionEstilosComunes }}">
     @stack('estilos')
 </head>
 
@@ -80,24 +86,46 @@
                             <i class="bi bi-person icono-cuenta" aria-hidden="true"></i>
                         </a>
                     @else
+                        @php
+                            // Obtengo el nombre del usuario que tiene la sesión abierta
+                            $autenticacion = auth();
+                            $usuarioConectado = $autenticacion->user();
+                            $nombreUsuarioConectado = $usuarioConectado->nombre;
+                            $direccionCerrarSesion = route('logout');
+                        @endphp
+
                         <div class="dropdown">
                             <button id="menu-cuenta" type="button" class="btn cuenta-cabecera dropdown-toggle"
                                 data-bs-toggle="dropdown" aria-expanded="false">
                                 <i class="bi bi-person icono-cuenta" aria-hidden="true"></i>
-                                <span class="nombre-cuenta" title="{{ auth()->user()->nombre }}">{{ auth()->user()->nombre }}</span>
+                                <span class="nombre-cuenta" title="{{ $nombreUsuarioConectado }}">{{ $nombreUsuarioConectado }}</span>
                             </button>
                             <div class="dropdown-menu dropdown-menu-end" aria-labelledby="menu-cuenta">
-                                <form method="POST" action="{{ route('logout') }}">
+                                <form method="POST" action="{{ $direccionCerrarSesion }}">
                                     @csrf
                                     <button type="submit" class="dropdown-item">Cerrar sesión</button>
                                 </form>
                             </div>
                         </div>
                     @endguest
-                    <a href="{{ route('carrito.index') }}" aria-label="Carrito">
+
+                    @php
+                        // Pido a Laravel el servicio que lee el carrito de la petición actual
+                        $nombreClaseServicioCarrito = 'App\Services\Carrito';
+                        $servicioCarrito = app($nombreClaseServicioCarrito);
+                        $peticionActual = request();
+
+                        // Sumo las unidades para mostrar la cantidad junto al icono
+                        $cantidadesCarrito = $servicioCarrito->leer($peticionActual);
+                        $cantidadUnidadesCarrito = array_sum($cantidadesCarrito);
+                        $direccionCarrito = route('carrito.index');
+                    @endphp
+
+                    <a href="{{ $direccionCarrito }}" aria-label="Carrito">
                         <i class="bi bi-bag" aria-hidden="true"></i>
-                        <span class="contador-carrito">{{ array_sum(app(\App\Services\Carrito::class)->leer(request())) }}</span>
+                        <span class="contador-carrito">{{ $cantidadUnidadesCarrito }}</span>
                     </a>
+
                     <button
                         type="button"
                         class="btn-menu d-lg-none"
@@ -115,20 +143,35 @@
     </header>
 
     <main id="contenido" tabindex="-1">
-        {{-- Muestra la confirmación o el motivo por el que no se pudo cambiar el carrito --}}
-        @if (session('mensaje'))
-            <div class="container mt-3"><p class="alert alert-success" role="status">{{ session('mensaje') }}</p></div>
+        @php
+            // Recupero los mensajes que guardó el controlador antes de volver a la página
+            $mensajeConfirmacionGeneral = session('mensaje');
+            $mensajeAvisoGeneral = session('aviso');
+        @endphp
+
+        @if ($mensajeConfirmacionGeneral)
+            <div class="container mt-3">
+                <p class="alert alert-success" role="status">{{ $mensajeConfirmacionGeneral }}</p>
+            </div>
         @endif
-        @if (session('aviso'))
-            <div class="container mt-3"><p class="alert alert-warning" role="status">{{ session('aviso') }}</p></div>
+
+        @if ($mensajeAvisoGeneral)
+            <div class="container mt-3">
+                <p class="alert alert-warning" role="status">{{ $mensajeAvisoGeneral }}</p>
+            </div>
         @endif
+
+        {{-- Muestro los errores que Laravel encontró al validar un formulario --}}
         @if ($errors->any())
-            <div class="container mt-3"><ul class="alert alert-danger" role="alert">
-                @foreach ($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul></div>
+            <div class="container mt-3">
+                <ul class="alert alert-danger" role="alert">
+                    @foreach ($errors->all() as $mensajeError)
+                        <li>{{ $mensajeError }}</li>
+                    @endforeach
+                </ul>
+            </div>
         @endif
+
         {{-- Aquí se inserta el contenido de cada página --}}
         @yield('contenido')
     </main>

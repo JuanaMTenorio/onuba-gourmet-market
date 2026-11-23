@@ -81,19 +81,34 @@
             {{-- Blade (bucle): por cada categoría que Laravel haya obtenido de MySQL
                  se muestra una tarjeta, sin repetir todo el código HTML --}}
             @foreach ($categorias as $categoria)
- 
+
+            @php
+                // Preparo las dos direcciones que el navegador puede usar para cargar la imagen
+                $imagenCategoria = (string) $categoria->imagen;
+                $nombreImagenGrande = preg_replace('/\.(png|jpe?g)$/i', '.webp', $imagenCategoria);
+                $nombreImagenPequena = preg_replace('/\.(png|jpe?g)$/i', '-400.webp', $imagenCategoria);
+
+                $direccionImagenGrande = asset('imagen/categorias/' . $nombreImagenGrande);
+                $direccionImagenPequena = asset('imagen/categorias/' . $nombreImagenPequena);
+
+                $cargaImagen = 'lazy';
+                if ($loop->index < 6) {
+                    $cargaImagen = 'eager';
+                }
+            @endphp
+
             <a href="/categoria/{{ $categoria->slug }}" class="categoria-enlace">
  
                 <div class="categoria-card">
                     {{-- alt vacío: el nombre ya lo lee el lector de pantalla en el <h3>,
                          así no se repite dos veces --}}
                     <img
-                        src="{{ asset('imagen/categorias/' . preg_replace('/\.(png|jpe?g)$/i', '.webp', $categoria->imagen)) }}"
-                            srcset="{{ asset('imagen/categorias/' . preg_replace('/\.(png|jpe?g)$/i', '-400.webp', $categoria->imagen)) }} 400w, {{ asset('imagen/categorias/' . preg_replace('/\.(png|jpe?g)$/i', '.webp', $categoria->imagen)) }} 800w"
-                            sizes="(min-width: 2000px) 320px, (min-width: 1400px) 16vw, 33vw"
+                        src="{{ $direccionImagenGrande }}"
+                        srcset="{{ $direccionImagenPequena }} 400w, {{ $direccionImagenGrande }} 800w"
+                        sizes="(min-width: 2000px) 320px, (min-width: 1400px) 16vw, 33vw"
                         alt=""
-                        loading="{{ $loop->index < 6 ? 'eager' : 'lazy' }}"
-                            decoding="async">
+                        loading="{{ $cargaImagen }}"
+                        decoding="async">
  
                     <h3>{{ $categoria->nombre }}</h3>
                 </div>
